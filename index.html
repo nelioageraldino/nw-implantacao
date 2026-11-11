@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>body{margin:0}[hidden]{display:none!important}</style></head><body>
-<title>Implantação NW Software</title>
+<title>Implantação Fundição São Francisco</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1146,8 +1146,9 @@ function er(e){ const raw=(e&&(e.message||e.error_description))||String(e); let 
 const Q=async(p)=>{ const r=await p; if(r&&r.error) throw er(r.error); return r.data; };
 const upd=async(table,col,val,patch)=>{ const d=await Q(SB.from(table).update(patch).eq(col,val).select()); if(!d||!d.length) throw er({message:"row-level security"}); return d[0]; };
 
-let ME=null, CLIENTS=[], CID=null, chan=null, adminOpen=false, adminTab="usuarios", USERS=[], UCL=[], RECOVERY=/type=recovery/.test(location.hash);
-const ROLE={cliente:"Cliente",consultor:"Consultor",admin:"Administrador"};
+let ME=null, CLIENTS=[], CID=null, chan=null, adminOpen=false, adminTab="painel", panelFilter="ativos", USERS=[], UCL=[], RECOVERY=/type=recovery/.test(location.hash);
+const ROLE={cliente:"Cliente",consultor:"Consultor",gestor:"Gestor NW",admin:"Administrador"};
+const flag=(v)=>{ try{ if(v===undefined) return sessionStorage.getItem("nw_proj"); sessionStorage.setItem("nw_proj",v); }catch(e){ return null; } };
 const store=(k,v)=>{ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){ return null; } };
 const mapP=(p)=>({id:p.id,email:p.email,name:p.name,role:p.role,clientId:p.client_id,allClients:p.all_clients,active:p.active,mustChange:p.must_change,lastLoginAt:p.last_login_at});
 const strongPw=(s)=>s.length>=10&&/[A-Za-z]/.test(s)&&/\d/.test(s);
@@ -1216,7 +1217,7 @@ function renderChange(forced,recovery){
       const { data:s }=await SB.auth.getSession(); if(forced) await afterLogin(s.session.user.id,false); else { toast("Senha alterada"); enterApp(); } }catch(er2){ x.textContent=er2.message; } });
   const o=$("#c-out"); if(o) o.onclick=logout; const b=$("#c-back"); if(b) b.onclick=()=>enterApp();
 }
-async function logout(){ try{ await SB.auth.signOut(); }catch(e){} location.reload(); }
+async function logout(){ flag(""); try{ await SB.auth.signOut(); }catch(e){} location.reload(); }
 async function afterLogin(userId,fresh){
   try{
     const p=await Q(SB.from("profiles").select("*").eq("id",userId).maybeSingle());
@@ -1232,7 +1233,7 @@ async function afterLogin(userId,fresh){
 function rUserbar(){
   const u=$("#userbar"); u.hidden=false;
   const sel=CLIENTS.length>1?`<select id="cli-sel" aria-label="Projeto">${CLIENTS.map(c=>`<option value="${c.id}" ${c.id===CID?"selected":""}>${esc(c.name)}</option>`).join("")}</select>`:"";
-  u.innerHTML=`<span class="who">${esc(ME.name)} · ${ROLE[ME.role]}</span>${sel}${ME.role==="admin"?`<button type="button" id="ub-adm">${adminOpen?"Voltar à implantação":"Administração"}</button>`:""}<button type="button" id="ub-pw">Alterar senha</button><button type="button" id="ub-out">Sair</button>`;
+  u.innerHTML=`<span class="who">${esc(ME.name)} · ${ROLE[ME.role]}</span>${sel}${ME.role==="admin"||ME.role==="gestor"?`<button type="button" id="ub-adm">${adminOpen?"Voltar à implantação":(ME.role==="admin"?"Administração":"Painel de projetos")}</button>`:""}<button type="button" id="ub-pw">Alterar senha</button><button type="button" id="ub-out">Sair</button>`;
   const s=$("#cli-sel"); if(s) s.onchange=()=>{ store("nw_client",s.value); location.reload(); };
   const a=$("#ub-adm"); if(a) a.onclick=()=>{ adminOpen=!adminOpen; showMain(); };
   $("#ub-pw").onclick=()=>renderChange(false); $("#ub-out").onclick=logout;
@@ -1255,7 +1256,8 @@ async function enterApp(){
   try{
     CLIENTS=await Q(SB.from("clients").select("*").order("name"));
     const saved=Number(store("nw_client")); CID=(CLIENTS.find(c=>c.id===saved)||CLIENTS.find(c=>c.active)||CLIENTS[0]||{}).id||null;
-    if(!CID){ if(ME.role!=="admin"){ showAuth(`<div class="card"><h2>Sem implantação disponível</h2><div class="hint">Seu usuário ainda não está vinculado a nenhum cliente. Fale com o administrador da NW.</div><button class="btn" id="o">Sair</button></div>`); $("#o").onclick=logout; return; } adminOpen=true; adminTab="clientes"; showMain(); return; }
+    if(!CID){ if(ME.role!=="admin"&&ME.role!=="gestor"){ showAuth(`<div class="card"><h2>Sem implantação disponível</h2><div class="hint">Seu usuário ainda não está vinculado a nenhum cliente. Fale com o administrador da NW.</div><button class="btn" id="o">Sair</button></div>`); $("#o").onclick=logout; return; } adminOpen=true; adminTab=ME.role==="admin"?"clientes":"painel"; showMain(); return; }
+    if(ME.role==="gestor"&&!flag()) adminOpen=true;
     const c=CLIENTS.find(x=>x.id===CID); clientName=c.name; SEED=/francisco/i.test(c.name);
         uid=ME.id; myName=ME.name; user=null; names={}; names[ME.id]={name:ME.name,role:ME.role};
     (await Q(SB.rpc("project_people",{p_cid:CID}))||[]).forEach(p=>{ names[p.id]={name:p.name,role:p.role}; });
@@ -1287,13 +1289,15 @@ async function loadAdminData(){
 }
 async function rAdmin(){
   const el=$("#admin");
-  const tabs=`<div class="seg"><button class="chip" aria-pressed="${adminTab==="usuarios"}" data-ad="tab-u">Usuários</button><button class="chip" aria-pressed="${adminTab==="clientes"}" data-ad="tab-c">Projetos</button></div>`;
-  if(ME.role!=="admin"){ el.innerHTML=""; return; }
-  el.innerHTML=`<div class="bar-tools"><h2 style="margin:0">Administração</h2>${tabs}</div><div id="ad-body" class="card tbl" style="padding:6px 8px"><div class="empty">Carregando…</div></div>`;
+  const tabs=ME.role!=="admin"?"":`<div class="seg"><button class="chip" aria-pressed="${adminTab==="painel"}" data-ad="tab-p">Painel</button><button class="chip" aria-pressed="${adminTab==="usuarios"}" data-ad="tab-u">Usuários</button><button class="chip" aria-pressed="${adminTab==="clientes"}" data-ad="tab-c">Projetos</button></div>`;
+  if(ME.role!=="admin"&&ME.role!=="gestor"){ el.innerHTML=""; return; }
+  const panelOnly=ME.role==="gestor"||adminTab==="painel";
+  el.innerHTML=`<div class="bar-tools"><h2 style="margin:0">${ME.role==="gestor"?"Painel de projetos":"Administração"}</h2>${tabs}</div><div id="ad-body" ${panelOnly?"":'class="card tbl" style="padding:6px 8px"'}><div class="empty">Carregando…</div></div>`;
   try{
+    if(panelOnly){ await rPanel($("#ad-body")); return; }
     await loadAdminData(); const cl=CLIENTS;
     if(adminTab==="usuarios"){
-      const access=(u)=>u.role==="admin"?"Todos":u.role==="cliente"?esc((cl.find(c=>c.id===u.clientId)||{}).name||"—"):(u.allClients?"Todos os clientes":(u.clientIds.map(i=>esc((cl.find(c=>c.id===i)||{}).name||i)).join(", ")||"Nenhum"));
+      const access=(u)=>u.role==="admin"?"Todos":u.role==="gestor"?"Todos (somente leitura)":u.role==="cliente"?esc((cl.find(c=>c.id===u.clientId)||{}).name||"—"):(u.allClients?"Todos os clientes":(u.clientIds.map(i=>esc((cl.find(c=>c.id===i)||{}).name||i)).join(", ")||"Nenhum"));
       const rows=USERS.map(u=>`<tr><td><b>${esc(u.name)}</b><br><span class="hint">${esc(u.email)}</span></td><td>${ROLE[u.role]}</td><td>${access(u)}</td><td>${u.active?(u.mustChange?'<span class="badge doing">Aguardando 1º acesso</span>':'<span class="badge done">Ativo</span>'):'<span class="badge todo">Inativo / sem acesso</span>'}</td><td class="num">${u.lastLoginAt?fmt(u.lastLoginAt):"—"}</td><td><button class="btn sm" data-ad="u-edit" data-id="${u.id}">Editar</button> <button class="btn sm" data-ad="u-reset" data-id="${u.id}">Link de nova senha</button></td></tr>`).join("");
       $("#ad-body").innerHTML=`<div class="bar-tools" style="padding:8px 8px 0"><span class="hint">Você cria e gerencia todos os acessos. <b>Cliente</b> só visualiza; <b>Consultor</b> visualiza e edita.</span><button class="btn pri" data-ad="u-new">+ Novo usuário</button></div><table style="min-width:760px"><thead><tr><th>Usuário</th><th>Perfil</th><th>Acesso</th><th>Situação</th><th>Último acesso</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
     } else {
@@ -1314,7 +1318,7 @@ async function syncLinks(userId,want,cur){
 function userForm(u){
   const isNew=!u, cl=CLIENTS;
   const body=F.txt("name","Nome",u?u.name:"","required")+(isNew?`<div class="f"><label for="f-email">E-mail (será o login)</label><input type="email" id="f-email" name="email" required></div>`:`<div class="f"><label>E-mail</label><div class="hint">${esc(u.email)}</div></div>`)+
-    F.sel("role","Perfil",[["cliente","Cliente – somente visualiza"],["consultor","Consultor – visualiza e edita"],["admin","Administrador – gerencia tudo"]],u?u.role:"cliente")+
+    F.sel("role","Perfil",[["cliente","Cliente – somente visualiza o próprio projeto"],["consultor","Consultor – visualiza e edita"],["gestor","Gestor NW – vê todos os projetos (somente leitura)"],["admin","Administrador – gerencia tudo"]],u?u.role:"cliente")+
     `<div class="f" data-for="cliente"><label for="f-clientId">Empresa do cliente</label><select id="f-clientId" name="clientId">${cl.map(c=>`<option value="${c.id}" ${u&&u.clientId===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>`+
     `<div class="f" data-for="consultor"><span class="lb">Clientes que este consultor atende</span><div class="chk" style="margin-bottom:6px"><label><input type="checkbox" name="allClients" ${u&&u.allClients?"checked":""}> Todos os clientes</label></div><div class="cl-list">${cl.map(c=>`<label><input type="checkbox" name="clientIds" value="${c.id}" ${u&&u.clientIds.includes(c.id)?"checked":""}> ${esc(c.name)}</label>`).join("")||'<span class="hint">Cadastre um cliente primeiro.</span>'}</div></div>`+
     (isNew?`<div class="f"><label for="f-password">Senha temporária</label><input type="text" id="f-password" name="password" value="${genPw()}" required><div class="hint">Gerada automaticamente; pode trocar. Mínimo 10 caracteres, com letras e números.</div></div>`:
@@ -1367,16 +1371,61 @@ function projectForm(c){
 }
 document.addEventListener("click",async(e)=>{
   const b=e.target.closest("[data-ad]"); if(!b) return; const a=b.dataset.ad, id=b.dataset.id;
-  if(a==="tab-u"){ adminTab="usuarios"; rAdmin(); }
+  if(a==="tab-p"){ adminTab="painel"; rAdmin(); }
+  else if(a==="tab-u"){ adminTab="usuarios"; rAdmin(); }
   else if(a==="tab-c"){ adminTab="clientes"; rAdmin(); }
+  else if(a==="pf-a"){ panelFilter="ativos"; rAdmin(); }
+  else if(a==="pf-t"){ panelFilter="todos"; rAdmin(); }
   else if(a==="u-new") userForm(null);
   else if(a==="u-edit") userForm(USERS.find(u=>u.id===id));
   else if(a==="u-reset"){ const u=USERS.find(x=>x.id===id);
     try{ await Q(SB.auth.resetPasswordForEmail(u.email,{redirectTo:location.origin+location.pathname})); toast("Link para criar nova senha enviado para "+u.email); }catch(er2){ toast(er2.message); } }
   else if(a==="c-new") projectForm(null);
   else if(a==="c-edit") projectForm(CLIENTS.find(c=>String(c.id)===id));
-  else if(a==="c-open"){ store("nw_client",String(id)); location.reload(); }
+  else if(a==="c-open"){ store("nw_client",String(id)); flag("1"); location.reload(); }
 });
+
+/* --- painel de projetos (administrador e gestor) --- */
+function projStats(rows){
+  const keep={}; Object.keys(ST).forEach(k=>{ keep[k]=ST[k]; });
+  const n={progress:{},plan_g:{},plan_s:{},plan_i:{},cfg:{},fichas:{},notas:{},agenda:{},equipe:{}};
+  rows.forEach(d=>{ if(d.collection==="plan"){ if(d.id==="cfg") n.cfg=d.data||{}; } else if(n[d.collection]) n[d.collection][d.id]=d.data; });
+  Object.keys(n.progress).forEach(k=>{ const v=n.progress[k]; if(!v||!(v.s==="doing"||v.s==="done")) delete n.progress[k]; });
+  try{ Object.assign(ST,n); const R=compute(); return {tot:R.tot,done:R.done,doing:R.doing,mods:R.mods,modsDone:R.modsDone,pct:R.pct}; }
+  finally{ Object.assign(ST,keep); }
+}
+const daysAgo=(iso)=>iso?Math.floor((Date.now()-new Date(iso).getTime())/86400000):null;
+async function rPanel(host){
+  try{
+    const cl=await Q(SB.from("clients").select("*").order("name")); CLIENTS=cl;
+    const [rows,act,prof,ucl]=await Promise.all([
+      fetchAll(()=>SB.from("docs").select("client_id,collection,id,data").in("collection",["progress","plan","plan_g","plan_s","plan_i"]).order("client_id").order("collection").order("id")),
+      Q(SB.rpc("project_last_activity")), Q(SB.from("profiles").select("*")), Q(SB.from("user_clients").select("user_id,client_id"))]);
+    const last=Object.fromEntries((act||[]).map(a=>[a.client_id,a.last_at]));
+    const cons=prof.map(mapP).filter(u=>u.active&&u.role==="consultor");
+    const consOf=(c)=>cons.filter(u=>u.allClients||ucl.some(x=>x.user_id===u.id&&x.client_id===c.id)).map(u=>u.name);
+    const by={}; rows.forEach(r=>{ (by[r.client_id]=by[r.client_id]||[]).push(r); });
+    let list=cl.map(c=>Object.assign({c,last:last[c.id]||null,cons:consOf(c)},projStats(by[c.id]||[])));
+    const ativos=list.filter(x=>x.c.active);
+    const media=ativos.length?ativos.reduce((a,x)=>a+x.pct,0)/ativos.length:0;
+    const parados=ativos.filter(x=>{ const d=daysAgo(x.last); return d===null||d>=14; }).length;
+    if(panelFilter==="ativos") list=ativos;
+    list.sort((a,b)=>(b.c.active-a.c.active)||String(b.last||"").localeCompare(String(a.last||""))||a.c.name.localeCompare(b.c.name));
+    const pc=(v)=>v>0&&v<0.01?"<1%":Math.round(v*100)+"%";
+    const trs=list.map(x=>{ const d=daysAgo(x.last);
+      const mov=d===null?'<span class="badge todo">Sem registros</span>':d>=14?`<span class="badge doing">Sem movimento há ${d} dias</span>`:`<span class="hint">${d===0?"hoje":d===1?"ontem":"há "+d+" dias"}</span>`;
+      return `<tr><td><b>${esc(x.c.name)}</b>${x.c.company?`<br><span class="hint">${esc(x.c.company)}</span>`:""}</td><td>${x.cons.length?esc(x.cons.join(", ")):'<span class="hint">—</span>'}</td>
+      <td>${x.c.active?'<span class="badge done">Em implantação</span>':'<span class="badge todo">Encerrado</span>'}</td>
+      <td><div class="mini"><div class="t"><i style="width:${Math.round(x.pct*100)}%"></i></div><b class="num">${pc(x.pct)}</b></div></td>
+      <td class="num">${x.done} / ${x.tot}<br><span class="hint">${x.doing} em andamento</span></td><td class="num">${x.modsDone} / ${x.mods}</td><td>${mov}</td>
+      <td class="fact"><button class="btn sm pri" data-ad="c-open" data-id="${x.c.id}">Abrir</button></td></tr>`; }).join("");
+    host.innerHTML=`<div class="kpis" style="margin-bottom:12px"><div class="kpi"><div class="k">Em implantação</div><div class="v num">${ativos.length}</div><div class="s">projetos ativos</div></div>
+      <div class="kpi"><div class="k">Progresso médio</div><div class="v num">${pc(media)}</div><div class="s">dos projetos ativos</div></div>
+      <div class="kpi"><div class="k">Sem movimento</div><div class="v num">${parados}</div><div class="s">há 14 dias ou mais</div></div></div>
+      <div class="bar-tools"><div class="seg"><button class="chip" aria-pressed="${panelFilter==="ativos"}" data-ad="pf-a">Em implantação</button><button class="chip" aria-pressed="${panelFilter==="todos"}" data-ad="pf-t">Todos (inclui encerrados)</button></div></div>
+      ${list.length?`<div class="card tbl" style="padding:6px 8px"><table style="min-width:900px"><thead><tr><th>Projeto</th><th>Consultores</th><th>Situação</th><th>Progresso</th><th>Atividades</th><th>Gestões</th><th>Última atividade</th><th></th></tr></thead><tbody>${trs}</tbody></table></div>`:'<div class="empty">Nenhum projeto para mostrar.</div>'}`;
+  }catch(e){ host.innerHTML=`<div class="empty">${esc(e.message)}</div>`; }
+}
 
 /* --- arquivos complementares --- */
 let FILES=[];
