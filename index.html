@@ -1,0 +1,1448 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>body{margin:0}[hidden]{display:none!important}</style></head><body>
+<title>Implantação Fundição São Francisco</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap">
+<style>
+/* Layout: faixa azul-marinho NW, abas fixas (visão geral, cronograma, agenda, fichas, key users), conteúdo em cartões. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --surface2:#eef2f6; --ink:#14324e; --muted:#566574; --line:#dbe2ea;
+  --navy:#14324e; --on-navy:#ffffff;
+  --accent:#0f6aa8; --accent-fill:#5dafe1;
+  --done:#8dbd2f; --doing:#f5a90f; --todo:#c4cdd6; --block:#7b8794;
+  --done-ink:#3f5f0a; --doing-ink:#7a4b00; --focus:#0f6aa8;
+  --pri-bg:#14324e; --pri-fg:#ffffff; --danger:#b3261e; --sched:#0f6aa8;
+  --f-head:"Poppins","Segoe UI",system-ui,sans-serif;
+  --f-body:"Aptos","Segoe UI",Inter,system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c1a29; --surface:#132538; --surface2:#1a3148; --ink:#e7eef5; --muted:#9db0c2; --line:#26425c;
+    --accent:#7cc4ee; --accent-fill:#5dafe1; --todo:#3a5169; --block:#8b9aa9;
+    --done-ink:#b9e06a; --doing-ink:#fcd27a; --focus:#7cc4ee; --pri-bg:#5dafe1; --pri-fg:#0c1a29;
+    --danger:#ff8a80; --sched:#7cc4ee; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c1a29; --surface:#132538; --surface2:#1a3148; --ink:#e7eef5; --muted:#9db0c2; --line:#26425c;
+  --accent:#7cc4ee; --accent-fill:#5dafe1; --todo:#3a5169; --block:#8b9aa9;
+  --done-ink:#b9e06a; --doing-ink:#fcd27a; --focus:#7cc4ee; --pri-bg:#5dafe1; --pri-fg:#0c1a29;
+  --danger:#ff8a80; --sched:#7cc4ee; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3{font-family:var(--f-head);margin:0;text-wrap:balance;letter-spacing:-.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num{font-variant-numeric:tabular-nums}
+
+.top{background:var(--navy);color:var(--on-navy)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px 32px;flex-wrap:wrap;padding-block:22px 20px}
+.top img{height:44px;width:auto;display:block}
+.top .ttl{min-width:0}
+.top .eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.8}
+.top h1{font-size:clamp(22px,4vw,32px);font-weight:700;margin-top:2px}
+.top .sub{opacity:.85;margin-top:2px}
+.stripe{display:flex;height:5px}
+.stripe i{flex:1}
+
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
+.tabs .wrap{display:flex;gap:4px;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:3px solid transparent;padding:12px 14px;cursor:pointer;white-space:nowrap;font-family:var(--f-head);font-weight:500;font-size:14px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent-fill);font-weight:600}
+.tab .cnt{background:var(--doing);color:#14324e;border-radius:999px;font-size:11px;font-weight:700;padding:0 7px;line-height:18px}
+
+main{padding-block:24px 56px;display:flex;flex-direction:column;gap:28px}
+section>h2{font-size:18px;font-weight:600;margin-bottom:12px}
+.hint{color:var(--muted);font-size:13px}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:14px;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn.pri{background:var(--pri-bg);color:var(--pri-fg);border-color:var(--pri-bg);font-weight:600}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--danger);border-color:var(--danger)}
+.btn.sm{padding:3px 10px;font-size:12px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.link{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-size:inherit}
+.bar-tools{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.row-gap{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+.hero{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
+.pct-card{display:flex;flex-direction:column;align-items:center;gap:14px;justify-content:center;text-align:center}
+.ring{position:relative;width:176px;height:176px}
+.ring svg{display:block}
+.ring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .big{font-family:var(--f-head);font-weight:700;font-size:40px;line-height:1}
+.ring .lab{font-size:12px;color:var(--muted);margin-top:4px}
+.bar{height:10px;border-radius:5px;background:var(--todo);overflow:hidden;display:flex;gap:2px;width:100%}
+.bar b{display:block;height:100%}
+.bar .d{background:var(--done)} .bar .g{background:var(--doing)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-content:start}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.kpi .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.kpi .v{font-family:var(--f-head);font-weight:600;font-size:26px;line-height:1.2;margin-top:2px}
+.kpi .s{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.kpi.wide{grid-column:span 2}
+.next{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.next .t{font-weight:600}
+
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card h3{font-size:14px;font-weight:600;margin-bottom:12px}
+.hbars{display:flex;flex-direction:column;gap:10px}
+.hb{display:grid;grid-template-columns:minmax(90px,38%) 1fr 44px;gap:10px;align-items:center;font-size:13px}
+.hb .n{overflow-wrap:anywhere}
+.hb .t{height:12px;border-radius:6px;background:var(--surface2);overflow:hidden}
+.hb .t i{display:block;height:100%;background:var(--accent-fill);border-radius:0 6px 6px 0}
+.hb .p{text-align:right}
+.donut{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.legend{display:flex;flex-direction:column;gap:8px;font-size:13px}
+.legend span.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px}
+.empty{color:var(--muted);font-size:13px;padding:24px 8px;text-align:center;border:1px dashed var(--line);border-radius:8px}
+svg text{fill:var(--muted);font-family:var(--f-body);font-size:11px}
+
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}
+th{font-family:var(--f-head);font-weight:600;font-size:12px;text-align:left;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 12px;border-bottom:1px solid var(--line)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.grp td{background:var(--surface2);font-family:var(--f-head);font-weight:600;font-size:13px}
+tr.clk{cursor:pointer} tr.clk:hover td{background:var(--surface2)}
+.mail{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mail code{font-family:inherit;font-size:13px;user-select:all;overflow-wrap:anywhere}
+.cp{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:1px 8px;font-size:12px;cursor:pointer}
+.cp:hover{background:var(--surface2)}
+.mini{display:flex;align-items:center;gap:8px;min-width:120px}
+.mini .t{flex:1;height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.mini .t i{display:block;height:100%;background:var(--done)}
+
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 14px;cursor:pointer;font-size:13px}
+.chip[aria-pressed="true"]{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.g{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.g.off{opacity:.8}
+.gh{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:14px 16px;background:none;border:0;text-align:left;cursor:pointer}
+.gh .sq{width:14px;height:14px;border-radius:3px}
+.gh .nm{font-family:var(--f-head);font-weight:600;font-size:16px}
+.gh .who{font-size:13px;color:var(--muted)}
+.gh .r{display:flex;align-items:center;gap:12px}
+.gh .pc{font-family:var(--f-head);font-weight:600;font-size:18px;min-width:48px;text-align:right}
+.gh .chev{transition:transform .15s}
+.g.open .chev{transform:rotate(90deg)}
+.gb{display:none;border-top:1px solid var(--line);padding:6px 16px 16px}
+.g.open .gb{display:block}
+.gprog{padding:0 16px 14px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.badge.todo,.badge.cancelado{background:var(--surface2);color:var(--muted);border-color:var(--line)}
+.badge.doing,.badge.registrar{background:color-mix(in srgb,var(--doing) 22%,transparent);color:var(--doing-ink)}
+.badge.done,.badge.realizado{background:color-mix(in srgb,var(--done) 24%,transparent);color:var(--done-ink)}
+.badge.agendado{background:color-mix(in srgb,var(--accent-fill) 24%,transparent);color:var(--accent)}
+.badge.blocked{background:var(--surface2);color:var(--block);border-color:var(--block)}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0}
+.etool{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;padding:10px 12px;background:var(--surface2);border-radius:8px}
+.sec{margin-top:16px}
+.sh{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.sh .sn{font-family:var(--f-head);font-weight:600;font-size:14px;flex:1 1 240px;min-width:0}
+.sh .sw{font-size:12px;color:var(--muted)}
+.sh .sp{font-size:13px;font-weight:600;min-width:40px;text-align:right}
+.sh .ed{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+.nb{font-size:12px;margin-left:8px;color:var(--muted)}
+.cr-unused{display:grid;grid-template-columns:1fr 1.3fr 1fr auto;gap:8px;margin-bottom:8px}
+.cr.lk{grid-template-columns:1fr auto;align-items:center;padding:6px 10px;background:var(--surface2);border-radius:8px}
+.cr input[type=text]{width:100%;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.notes{margin:8px 0 4px;padding:12px;background:var(--surface2);border-radius:8px;display:flex;flex-direction:column;gap:10px}
+.notes textarea{width:100%;min-height:72px;resize:vertical;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.ni{padding-bottom:10px;border-bottom:1px solid var(--line)} .ni:last-of-type{border-bottom:0;padding-bottom:0}
+.ni .nh{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font-size:13px}
+.it{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:7px 0;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.it .tx{min-width:0;overflow-wrap:anywhere}
+.it .tx .ed{font-size:12px;margin-left:8px;color:var(--muted)}
+.it .mt{font-size:12px;color:var(--muted);text-align:right}
+.it.done .tx{color:var(--muted)}
+.st{width:28px;height:28px;border-radius:50%;border:2px solid var(--block);background:var(--surface);cursor:pointer;display:grid;place-items:center;padding:0}
+.st svg{display:block}
+.st.doing{border-color:var(--doing)}
+.st.done{border-color:var(--done);background:var(--done)}
+.st:disabled{cursor:not-allowed;opacity:.5}
+
+.ev{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ev li{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);align-items:start}
+.ev .dot{width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--done)}
+.ev .dot.doing{background:var(--doing)}
+.ev .dot.ficha{background:var(--accent-fill)}
+.ev .w{font-size:12px;color:var(--muted);white-space:nowrap}
+.ev .x{min-width:0;overflow-wrap:anywhere}
+.ev .y{font-size:12px;color:var(--muted)}
+
+/* Calendário */
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.cal .dh{background:var(--surface2);font-size:12px;font-weight:600;color:var(--muted);text-align:center;padding:6px 0;text-transform:uppercase;letter-spacing:.05em}
+.cell{min-height:92px;border:0;border-top:1px solid var(--line);border-left:1px solid var(--line);background:var(--surface);padding:4px 5px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:3px;min-width:0}
+.cell:nth-child(7n+1){border-left:0}
+.cell.out{background:var(--bg);color:var(--muted)}
+.cell.sel{outline:2px solid var(--accent-fill);outline-offset:-2px}
+.cell .dn{font-size:12px;font-weight:600;width:22px;height:22px;display:grid;place-items:center;border-radius:50%}
+.cell.today .dn{background:var(--pri-bg);color:var(--pri-fg)}
+.chipe{font-size:11px;line-height:1.3;padding:1px 5px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;border-left:3px solid}
+.chipe.agendado{background:color-mix(in srgb,var(--accent-fill) 22%,transparent);border-color:var(--accent-fill)}
+.chipe.realizado{background:color-mix(in srgb,var(--done) 24%,transparent);border-color:var(--done)}
+.chipe.registrar{background:color-mix(in srgb,var(--doing) 24%,transparent);border-color:var(--doing)}
+.chipe.cancelado{background:var(--surface2);border-color:var(--block);text-decoration:line-through;color:var(--muted)}
+.more{font-size:11px;color:var(--muted)}
+.dayp .evr{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;padding:10px 0;border-bottom:1px solid var(--line);align-items:center}
+.dayp .evr .tm{font-weight:600;min-width:92px}
+.dayp .evr .tt{min-width:0;overflow-wrap:anywhere}
+.dayp .evr .sub{font-size:12px;color:var(--muted)}
+.legend-row{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:12px;color:var(--muted)}
+
+/* Modal */
+#modal{position:fixed;inset:0;z-index:30;display:none;align-items:flex-start;justify-content:center;background:rgba(8,20,32,.55);padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow-y:auto}
+#modal.on{display:flex}
+.md{background:var(--surface);border:1px solid var(--line);border-radius:14px;width:100%;max-width:680px;margin:auto 0;display:flex;flex-direction:column}
+.mh{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.mh h3{font-size:17px}
+.mh .x{background:none;border:0;font-size:24px;line-height:1;cursor:pointer;color:var(--muted);padding:0 4px}
+.md.wide{max-width:860px}
+.mb{padding:16px 20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.mfoot{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line)}
+.mfoot .sp{margin-right:auto;display:flex;gap:8px;flex-wrap:wrap}
+.mtabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:-4px 0 2px;flex-wrap:wrap}
+.mtabs button{background:none;border:0;border-bottom:3px solid transparent;padding:8px 12px;cursor:pointer;font-weight:500;color:var(--muted)}
+.mtabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.mpane{display:none;flex-direction:column;gap:12px}.mpane.on{display:flex}
+.hdr{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.hdr .f label{font-size:12px}
+.lrow{display:grid;gap:8px;align-items:end;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.lrow.h{grid-template-columns:repeat(4,minmax(0,1fr)) 64px 28px}
+.lrow.d{grid-template-columns:minmax(0,1.1fr) minmax(0,1.5fr) minmax(0,.9fr) minmax(0,1fr) minmax(0,1.1fr) 28px}
+@media (max-width:640px){.lrow.h,.lrow.d{grid-template-columns:repeat(2,minmax(0,1fr))}.lrow .x2{justify-self:end}}
+.lrow .tot{align-self:center;font-variant-numeric:tabular-nums;font-weight:600}
+.lrow .x2{background:none;border:0;color:var(--danger);cursor:pointer;padding:6px;font-size:18px;line-height:1}
+.sumline{display:flex;justify-content:flex-end;gap:8px;font-weight:600;font-variant-numeric:tabular-nums}
+.dl.wide{grid-template-columns:150px minmax(0,1fr)}
+.tb2{width:100%;border-collapse:collapse;font-size:14px}.tb2 th,.tb2 td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}.tb2 th{color:var(--muted);font-weight:500}.tb2 td.r,.tb2 th.r{text-align:right}
+.fico{display:inline-grid;place-items:center;min-width:40px;height:28px;padding:0 6px;border-radius:6px;color:#fff;font-size:11px;font-weight:700;letter-spacing:.03em;flex:none}
+.fcell{display:flex;gap:10px;align-items:center;min-width:0}.fcell b{overflow-wrap:anywhere}
+.fact{white-space:nowrap;text-align:right}.fact .btn{text-decoration:none;display:inline-block}
+.fr{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.f>label,.f>.lb{font-size:13px;font-weight:600}
+.f input[type=text],.f input[type=date],.f input[type=time],.f input[type=number],.f select,.f textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.f textarea{min-height:84px;resize:vertical}
+.chk{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
+.chk label{display:flex;gap:6px;align-items:center;font-weight:400}
+.itbox{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.itbox label{display:flex;gap:8px;align-items:flex-start;font-weight:400}
+.dl{display:grid;grid-template-columns:130px minmax(0,1fr);gap:6px 14px;font-size:14px}
+.dl dt{color:var(--muted)} .dl dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.sub-h{font-family:var(--f-head);font-weight:600;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+
+.foot{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{padding:2px 10px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);font-size:12px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--navy);color:var(--on-navy);padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px);z-index:40}
+#toast.on{opacity:1}
+
+@media (max-width:760px){
+  .hero{grid-template-columns:1fr}
+  .kpi.wide{grid-column:auto}
+  .it{grid-template-columns:32px minmax(0,1fr)}
+  .it .mt{grid-column:2;text-align:left}
+  .gh{grid-template-columns:auto minmax(0,1fr)}
+  .gh .r{grid-column:2;justify-content:space-between}
+  .cell{min-height:58px;padding:3px}
+  .chipe{font-size:0;height:6px;padding:0;border-left-width:0;border-radius:3px}
+  .dl{grid-template-columns:1fr}
+  .cr{grid-template-columns:1fr}
+  .dayp .evr{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+[hidden]{display:none!important}
+img{max-width:100%}
+.userbar{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;justify-content:flex-end;font-size:13px;border-top:1px solid rgba(255,255,255,.18);padding-top:10px;margin-top:-4px}
+.userbar .who{margin-right:auto;opacity:.9}
+.userbar select{background:rgba(255,255,255,.1);color:var(--on-navy);border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:4px 8px;max-width:240px}
+.userbar select option{color:#14324e}
+.userbar button{background:transparent;color:var(--on-navy);border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:4px 12px;cursor:pointer;font-size:13px}
+.userbar button:hover{background:rgba(255,255,255,.12)}
+#auth{display:grid;place-items:start center;padding:40px 16px}
+#auth .card{width:100%;max-width:400px;display:flex;flex-direction:column;gap:14px}
+#auth h2{font-size:20px}
+.err{color:var(--danger);font-size:13px;min-height:18px}
+#admin{padding-block:24px 56px;display:flex;flex-direction:column;gap:16px}
+.pwbox{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:20px;letter-spacing:.04em;background:var(--surface2);border:1px dashed var(--line);border-radius:8px;padding:12px;text-align:center;user-select:all}
+.f input[type=password],.f input[type=email]{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.cl-list{max-height:200px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.fico{display:inline-grid;place-items:center;min-width:40px;height:28px;padding:0 6px;border-radius:6px;color:#fff;font-size:11px;font-weight:700;letter-spacing:.03em;flex:none}
+.fcell{display:flex;gap:10px;align-items:center;min-width:0}.fcell b{overflow-wrap:anywhere}
+.fact{white-space:nowrap;text-align:right}.fact .btn{text-decoration:none;display:inline-block}
+
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="ttl">
+      <div class="eyebrow">Implantação NW Corporativo</div>
+      <h1 id="cname">Fundição São Francisco</h1>
+      <div class="sub">Cronograma, agenda e fichas de atendimento da implantação</div>
+    </div>
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAbAAAAByCAYAAAAyGYQhAAA8rklEQVR42u19eZwdVZX/99yqt/WWTshGWBMIRJB9R5FVUGQTTGZUEAQScAFx1HFmEDqtojOjvxlxZyCAgQSSCCggiAsgiOwgi0AWSMKSQNJJOkkvb6m65/dHndt9U9Trfq+7k34N9/v5vE8nb7lVdevW/d5zvuecCzgMO3gZzuMluIBfREPPewvhMYNc7zg4ODg41B5xCUHxq/glL4fmZfgjL8OntyAydkTm4ODgkATluqAWmAwlpEHI4QR4mI8c7uVl+DQzUkQIicDMUI7IHBwcHByB1RoIDCCPABpADh+Gj/l4FX/mpZjBT6GOCNoRmYODg4MjsNq+H13QCMDI4igo3IrRuJuX49P8DhockTk4ODg4Aqtle0yBQMhDAwAyOBYhbsZm3M2v4jMxInMamYODgyMwhxokssi1qEFQyOFoKMzDZtzjNDIHBwdHYA61TmIkRMbohoYGUIejnEbm4ODgCMxhZBEZkKyRvdu16IjMwcHBEZjDCNDIgJvQgbv5NZzDS9DkNDIHBwdHYA4jQyMDFLI4GoS58HAvL8U5/ACyTiNzcHBwBOYwcjSyLI5ECnOxM/5sKns416KDg4MjMIfa18i6RSPL4EgozEcWv0twLToic3BwcATmUMMaGYORxUfAuBHKaWQODg6OwBxGokaWw1FOI3NwcHAE5jDSXItOI3NwcHAE5jBiqaw6jQyOyBwcHByBOYwkjewxITKAeTo8R2QODg6OwBxqPY/sKCjMxXjcx8vwab4GKVqEkADmFmeROTg4OAJzqDXHohkHRQABAt3tH6hXN/x397odFmyctcvn2y7ZvYlaxSJzRObg4OAIzAHDvxN0REU+AKCku/wN4arGNr28uaA35upZq6NzOe/6tBf8ftNXJ1/QfsGOYxyROTg41Ap81wXvS+JiKBA8ABoldHqb9bq6kt6UqYNWzX6KKWTeyMCmksbodEodUQr5CFWfmrnpK7vO2RQUb6fWVesAgKfDw6KI1FzHOjg4OAvMYetaXCkQgJLu8NbptxrWhStG+7o9N94jaiSPqYeKGIoIVAg5ZADZFB3mEf1fk5e+Z9Nlky9c+409G7fQyFz4vYODgyMwh63mKmSE6PTWh282tPGKMSm0141XRE3kMWlGOTtKAeDuEuuQgVxKHZpRuDZTKDy48dJdz+3RyMi5Fh0cHByBOWwFjQud/vrwrYa2YPlonzfUTVQKTaxYaY1KHIBEkkfWVWKdD8BZXx2Y8ujGNAX3bfrq5Avav+o0MgcHBzgNzGFINa4OvaGuqNszOYRqtOczaZ+h9cCaN0TWHbAGgbK+OrwY8uGKI42MnUbm4ODgLDCHqi0uwGhcATq9deFbDev1itGeXp8b7xE1kd+nq7BqIiOA8gFrWyODn76347LJF7ZdsnuT08gcHBwcgTlU5iokhLrT26BXNawNl49Job1uHPWvcQ2ayCyNjHO+OiSlcG1KhQ9u+PIu57W1OI3MoY/hy0z2y/WIgyOw919wRqA7/fbwrYY2vXy0xxvqJiiFJlSucQ2exyIio27RyHIeHZBJqRv8DeEfNlw2+UKnkTlYpKXkRUTE5mV95saGA5wG9t7XuAJ0eZv1+lxRb8zmEKjxXopJq4FrXENkkfVoZDmfDiuGfBjr1IVOI3PWlqx2tPVeBkAGgCaiDrPcMuTmes3BEdh74uEHyORxhQh0l7cJ63NF3pTNIVDjPI/VYIIzthaR5QPWRFDZFB1WCnFY4Kdndlw2+f/yobeQfrJsEwBwCxRmg4kckb2XycuysvYBcAqAfQGMBlAPIGDmdwA8C+BuIvqH6zWHvivhOQwnIRERmJfhp8jiSyhIUd2+XIUhQl3wNvH6bB7tdXXQ1Kg8VkOpb3kKCMEb80/nOtTa1A4lYqbBjxVmBhOBsj4RMyMf4lkd6h+H26VuH9tqEVkr2Flk703yYuYGAP8G4BIATX385C0AJxPR88ysbIvNwQFOAxtxwRmB7vDaw1UNbfzaaIV19RM8wqhtqHE5jcxhUG5DcRX+GMDlQl4aQACgBCCUV1H+vwOAQ9w85QDnQhzZGpfu8jZHrsJMlgNvnOexYo8RjtA1aXmNzJ/Zfumucygs3uY0svcUiIg0M88C8HkhKtoizd5yAFj/TvWjo7kx4QjMoeYyuUTjQre3Ua/PFbEpk9OliLi0x9D8XpnV4hqZOrQU8qEhpS/s+Mqu19Zrf4HTyN4TrkPNzOMRuQ2NX8FYVW8AuBbAP+SzCQCOBXAkgDft58KOWDTRis616DSwYRFx+3M3xJZvPFRujK3dbjVtWhrYT5DFl1GSWoVFb2O4LpvnDbl6YtXoKVZagji2BbaSBlaRRiYWGTEzCiGe5VD/OKz37hjzX69t7OkzMOBW3yMmXF4I7CwAv7ac3QSgDcBpRPRowu/GA2gnouJA5hGH94kFJhMwVeAD0IOY4AkAi4jbc7xYKC0ZV0PSQ2B+P9Djb6t2B+TeIHjQCNHtbQg35AJuz+QQehN9n1XIjOD9IQYRRZtrorvEGgDlfDogUOoG6tJflPD7XxOtWgcQWlpYtc4GOyIbMThY/mrLVXgdET3KzL6t4hJRSERrYs+VB+BsAJ8EkGHmEoAHAPwsieQc3h9QYpLr/l4DTSy02ufY/3XS92Swppg5I3/J/v1Ajx9r1zcEOkTt+tKuZ7s4KrV/dRe16zfqC+GK5iyvy22nWI0ij1WgwXgfRjIQRdu4dAesSyE4k1KH+ES/BKXuW3/ZHuf87w03NLe2kgYRT1+40INLeq1xI4wJwB6WO1AhCtR4SD5jIa2QiMJY4Ie5t6MAfAPA6QA+BuBUAN8DMLach8Xh/WGBpQDMAHCUrIrsyTdE5KO+j4iersZ0t8JmjwHwTwC2QyTKhgA2Avg1Ed1rfW83AF9HFH2UEn0uAFBi5mUAfkhEqyr1e1vtHg3gXDl+Rq6xxMwFAC8B+BERra302qx2dwVwGYBdAaSl3YCZOwBcQ0T399emkr5Wq5quDbrSJfJxvl+HHREAQQlamIvev8o/lCKgUGLNirtUg96Dm8Pvt+UmzTzrzg13NK1dfvMNMw5cCwAtzKoVziKr0dD5RgDjY0u3DQBWyudcgXtfydyh5a9nBYM4vI+DOFoB/Hs/3/sGM19ORD+vhECsgZtCFDa7T8LXjmDmB4moW/7/SQAX99HsUgC/qGTAWsevA/AzAHuX+eoZALoBfNe4OSu0mxjAlwB8pcx3AgD3V1p7l07auBxAC/9x9JygoGaC6fN+Vu2AEAgC1nJQ9f5yDQCsAa3RiXre7DVr5dVzM8D1gcocmUvRUcHo5lln37biF5l6dXMr0XoAzrVYm8jKy0ZeFrKoIgnEBH8YK86RF1we2BctayvppQE0A/ghMx8v7kRVRftZaacU+5sSy8VglZUXYh+/JO8fZvzjVQSnHARgd2kn3m5R2j2KmbOVuEmtiKqctG3asc81APB6tQnN3AJFH93weuoT664IwuIxQT68Sod6hZ8i5XukGNDM7/0IPCXLA83cwTn9jpoUdnmTwtFeA8Z7RGmtAWjdFRS62U9np3mZ7NWFTv3g2betuPSC3746wbgWW1pYjXTXYrzI7dYqdlvuOENwLPP7tHg/EPPulNwUXJP3bZsWYR7MdfiIEgo5ln+BhMGWA3AlMz8GoKsKd6KWtslaNSl53/79i2IN1Vuhtvaqaz9mzhFRdwXHNr89wtRYS7g+0+5eAHYSC68/K8x8vguAKdKmvRI0x3gh9v3+XGUMSd7FbIBo0zIA38rfNfZXXjH8HBF9xk+pKdCMIIC2Ax7ecxYXc6eq4w6MYk/Vc7NSlGEmsIbmSBsDiBSRoqDUqRkevHRmH2Z9daGEC8+5Y+X1WvOC1rNoNVqB6QsXeoumT9cjxSKTh9YEF+ky3zGufh5MNJ4sRKmvRWEl51PmNx4AxcxaCMxPcEAo0aMpyY1oHg/5zCtjcXl9tKFjgWJerERApQvipP6w2+Fqg9zKtNOnJm8FwPV7TDNGBhJ8Z8ZFuevrI4BNVRrwZ19/uXsgJOb11S9+hWa4JyTwEQD/TERzTATfIEL14++vBPAyomilOIFBSGYqgOcrIAZjJR5gkagqU4VkBwB7CoFVei1TAOwYe4+t0ODnB7RcbYVGa2SRzZ4Nyp7athTAFXzX2LlBITwHpM71s7QzQu7RyEa6a9EQV8jcSXXY7DVrn7LcrHzKgKmnrmNSLAuBFACEQVETM/mZ7D7M4f9yEHz+s7954/pisXv+ohl7jBiNzHLPm0CGegCN1uRfQBRaXkr4TdXHiU1KzbJINZN8CUAXEW22zqdsRG+CfhVYba+3/289k+uJKKjwnJPa4GraqJas+ri2bdqOmezl/Nl6v14W/GmZewLjmrWvtdox0g8xmraYmZssA6iTiNoHOM4z0k7aCvDpJqKNsbH3Lm10IInMX2HmOwG0DVUioUTvbWTmp4TAbMIxZDUGwAeFHJQVjltO/xoLYL9+StEY0jkcwN0VELI55gFWwAvFLM0XASyv0rffl0XGRG1LAVzZdXfzHOS9CwE6z8+pKNhjhGpkvRYXupDTm/3RrFDHYzyP0tBUVUFiAhSIEJTymhjkp7P7MvAjYn3xSNDI7ArtohufBODjiLTjHS2vRDuAZcz8d0Qh5H8hoqCaACR7gmLmgwCcAOBAWZSNExJjAJ0A3pEAqqcA/IGIXpGJK/F41rO3OyJN25NJdQx6gzjMOB0D4FvMvLmCUlFaiHxibNGYAvDvzLwh5mFhmdvuI6Kn5dxyAM5Brx4eAniYiO6oMiBlOwCfEy8MiY43n4heqTTPVdqZCOA8ANtLO+0A5hLRMntetSd7uX/7Igq42w9RZOck6RslHqw2ACuY+Rm5/qeMPFJFAN7HZVykrOt7WebpkJl3AnARgBNlfDKAVcz8HKIAtieTjmcloptxfowcZ19EwXCj5L51AVjDzEsBPALgHiJakUTGfZnufU34XyWiH5UjMOsmZYRw9rBIyfxdCuBgItrEzL48iOcCuCHBQjNRRz8gon/tizitxMlDATwsrM5lLEFzLvcBOKWK1eDt8oDaRGvO8X+J6F+GskoAt4ip3RoRKN/TtJvm1HkAna18tSs0EIasJTGaajmR2RAXgztVHTqpmYnqdKNSlGWOPks6EgPsE1OBU+1XTZiTej27V31Kd4ETax9HpO6nsooBhIX8CwCuy/jhgjmn7/ZOLRFZrEL7aQD+BcCH+3HpA5H2+jcA36kk4jU2KR6HKAjphH4K6tpYI4u8q6XAbtkJipl/1EeA07bEHwCcTkR5IdUXsGUwSTeAg2RyVv255GTyvhhRMJmNeUR0dpUE1grgytjHXyain1nzofnuaACnAfgsovqQzRVe/2a5Z98nohf6mTftOftvsqgx+B8AX5fPPwrgRyK9JOF3AD5JRKXY2FZWnMHpiKqyfDgWB1EOrwO4CcCPiWiNfR1qgJvWzxQW5ioCOiqxbP4KYH2Ci9BMaQdXGnAhlly6woojU2UFgHLXY+WljBeXY7xfPOsahhTUCk2t0NwCxQxFJ2961fvEuitK3ThRl8LvhKF+zUuR8n0Qc20GeygCiAGtuVPn9Fpve92tJoVNXgOPU0RZHUqlkSGgSQIpAqmglNdhqaC9dGYflUpdXQi8P55zx8rLPnvbiu1rIY/MGlM+M38TwAIAR5tUjz6ewaKsVI8BcA0z72wVCegr+KiBmb8H4A4AZwp5BVYgUvw4JfQGUY0HcD6Ae5n5Alt8Twh9317cnXlpu5jgjWDrs0pfXIbI46+8HH9HAHXyvTZE27QEVsHgHIDjK1xkmP451greMv12MDPvJPdAVRgdfZT8tiDn1AHgFTt3Tr77IQC/AXAjgI8KeZX6GB92ceRGAJ8GcDszH1vhvGk8S8YdGQBIy7mcCmCekFcQexXlb5P0a9L4GyXkdwuA42R+Lndf2erfnREVgP4NMx9gBxL2RT75MlGFLBdw3lYo57IcUW4WyhDY/gluhHIke7BlGfUVJcmI9LU9+2nX9NU0+X7Sd9cDeHprTXjUCk0EzQxiBmU/1bbUO2XdlR7jY0Eh/E4Q4HU/S8pPCZGVcbMOB3GFIXehjt/2Junu1A660WvEWEWU1ZEbcasEREdEBhUGRc1Bif1Mdh/l+/9Lin7/2d+88ZXpC5eMWzRjRggibuHhiVqUZ+g8AN+xInZZ3DddAJYAeAzAEwBelfeMVhDIWCz7TFgT4ShENQf/3aoEHwoRmjzGDhnDG61I4ZS1yNTisvoZgMvk3Ckh6XgzouCprLSdTjg3sj6r9JV0f5K+l5XjbwJggr7axR3lW8FXDODDler5YgkdIr/3pW8UgMniButvsWw+20PkENOOL3PfE+ZQVv7cLxDFHoSWBmjuy2YAbyPaeuZt+b99XkZn2x3Az62FjqpA6/etVyczHyjjZ5wQpB97pXv2hk8ef83iXbs0Ns7T0t4KAM+Ix+51Ia+0le8XIgrKu4WZP2jIuC8N7Gl5MHaLucpsK2wugNeHwF3Glon5iKxOkm78aLnxK/pZ4Yzpw8RNIryUmMy/Q/+T/jRZ2STpX4/JYMLW3ODEFLStZY2sJzhDo1vV80avSStq4NGeR5lqNa4hKPhZcxqZNd53FlIxSf4mAuwWAD+VB9osJnOyiPuEWFBTkyaNBAsvBeC/AfyzdQyz2t4E4HYADwJ4Tf6flmf/AABnWZMzy1jPAPgeMy8lorsTCOA6uQbPWpUb68E8Nx0A7pG/Xh/PC8k514k2ONpqI5Bz3xzrB/NML5SoZTMJ/lFcmym5DpKF7o5E1Nc8ZpKoD40Fb5G0kwbwoQrnD0gKzrjYHPIQEW2OWUg7ifURWPEK6+U6HpSxsVrGR0Ys3yMRVfzf2/IMhTJvfRnAvw4gDWIKgKsRFVoOrEXNYyIFjZb5dorczy47fkGiRP9LZJfQGhsQr8Mc4ZvN8l6TjPMzxerPWlbhngB+zMyfBLDJ70MXelPcYd9MuJlaOveLRPTNIco7MG08KSfqlTmvg8Wv21eY+2R5uKtxkx7Rjw9bW4MPZSIl/yq+a28oIp4qjlo0Gtkp7SsBXMH3NN2oC5FG5qeGXiOrSONi7qQcd3rNTFTHzZ5HWWaCDoYv/ZRACgQEpbzRyKYxcHWhM3/h2betuC7jhwtaT6d30LpNiMz0wony4GuLvK4DcHHCGNqMSNd9mJmvBvAFWWCuLLdokgXd2QAutI5hEoHvB/DvRPREmXO8i5l/JpP+14REzKSdRZQb+gyA1fbkT0SPyeRmiHQHRDpzs2X1rQNwKRG9UyHhj5ZJe7S1YCwC+AoRvV2hRPGITLj24nYKooCI1yuQTj5ikV98XjmamdNEVOxjHmHLDYkYEd8f8woZjc5YQyvFfXczEb1c5jxXAHiUmRcB+D8hfLba/Awz/w8RvV1hUIcZo6cJQYaWtXg5gLuIqEMWSGOFPN82+p01/mYAuMBaNChElVi+TkTXJxx3HYA/A/gzM/8BwC9lQWW451gAnyOin/Q1uTdKh5XTpFissH2rTG7ub5C8gCipmWKrGfP5PlYeTDnshSjKqRrsJSuYd+lglmXnWwRGsdpuBSHfbT8x14BGFte41Pa6S+3AjX4jxnlqaDWu94hGZsb24Sany4pq+7kEDKQSkjuVkMVqIrpSXPlr4iHG8h1m5klCPiq2CL0XwAwiekLa9Ezb1v99Ilonx7nCcvsYq2hPAJ9PCuaw2yyTrkNSys4cr1wyq5LJsFzKT19tKGsSJSLqRBS9GQ9KO7bcAsDSbzJigSFm6Zlz+oBFjFTG4jbRhwdaY4DE8n3ach9qK7XoF4iCKD5ORJcb8rLuV7yvUkT0OqK6kWtii+wdEuavSmDn0i4D8GkiukXIi4ioJOPxNiJ6JLYH3HaIApPsqO08gG8Q0fUm1yvh3nliCPxWgl2KsTn3XGYe3RfpjCaiFwDc2QeBjQbwZVOQczCWmHXTXgOwuI/VwDQAE8v4cs05HhobIOb95wGsLdPu9hX4safIKwlvAnguNjlteyLbxhqZRVxdnNWrve11lz9JN3qNGKcIua2pcY1UjcxaEJG4pOwx+oaEEBOA0BSHtl49xbXN5NHP4c6y3En2Sv1rRLROJgkthXTtAt6hrKSVPGc/BvDb2LkygOnMPM4OELAKXff8LdcV1vcSX1ay9kDa0Aka9l8sN5b5/DBmbuwrEEY8TvvH2rLdiKNNtaAyo52sFJwpMfJ72liAW4SIR/fh34joaxIp2UPo1v2KX6/xAL0A4E/ojQNgi2gHujf8JgBfIKLHDenEKmkoq//M35PlmrXVX7cB+JW1wEga56GVz3szgIdiydUfBHC06qd+GcQU7UiwiMyF/TOAw42gOwQPdgjg0T4GwO6IcjDKTQppK4E5vtq9U0xT+z2zmkz6XXzwH4ooV4ETSPNZIlpbCzvFEkUbP4pFRnRq29LUaeuuLFHpI0E+/G5Q4jf9HCnflxJVAyCy3uAM5Dmr13gTdYe/ox7tGYvLEBdGxKZ4CkQUlPJal0rspzL7+n7qR5lU5qGzb1tx6QW/f31MK231ElWmzeZKomfNg15uwrW8ImfFJiECMMfO66lkYSkpJv+FKD9MWe7OfQa4qsewbBYbBUqsjJ3rXlZ+mCpzXw40le8tS7kt1vYx0ue6j+MfnlAd6E/lgitscojv7NFHUJDBs9b5mnMaN4B+M2Pn20T0JzNuyiyuODa/nhlzW3fLNjpBf3OltYNJNyKt05awMgA+3BeBkbjMHhfNicpE8DUCuET8oDxIPcz89nHxC6sEqy9tJSgn/XZqgpVkzvVvoiGULT0lbpMwdh1s6V/KWk1soX/FytUM/8QcWWQRkbVA1Z3SvjJ16rorfK94jC6E37VrLaLCWouGuJi5i3J6rbd9uNnfkRu9JozfIqoQI3F3V+ohsrCU134q01Nr8bO3r/zKBb99e0hqLdpbCwF4J2bR7ADgDPlM2yvdCiYsxFzge8UWZaYK/N3Ga1Kpd0S+/ySipGZ7YlMSHbZVA5eGINrTJPOutNx1pg+aE9yD8Wf/w+gNU4dYow/GvnO05R2iBDekstyVsPLrHutvoTLAILm3Y6HxQG/eH1VBYApRgMrP+iDoJGNikmWVGjwH4O8J1lu5WojGFfxkzI0IAPupfkLMPem46ywrLMmVeBqAY4bCChMstoRpXS5EPnZTyXpoJ8TES0IkDD6HKNeiGBNLybKwxpfxgWcTqurbEVV/r9mHtxqNDAh1ApEpyWTWIXcjp9fSBN2lJnGD3ySuwnDkElclGpnn+z8qBPkh08ishc5Tdn07+XslM19k6hTKZOBVsTg03zvSKvXDlrvqlX7ccmX3DrQmbfvZ3MfWmkbADvR/SqhVemzSJrtyTU3WQsC0cY/VjrJkiEMTCML8e09rDmEraO3VahYUMZedJ3mEvtGNpMakh0hr0mU8a5Ucy8yh7QD+m4jyFXqYTH8cYll8PTEORNRuW2z9vEK5J29bFq/BbqqChDaI1fLbPgisHsClxgob7CpJyOsfCR3d48eVHAk794StXDEVW9VCcmhWCzm+UeYmjse7dTDzd2KCm8H8fhl689d0TRNZfxpZhjzlU2RkgUzYIoUhujkbvu1N0pu9SdzgNWGsUrWtcW09jUy9SyMbQA+wtZJfFvM2NCMKob+VmY8RYd4QmaoiYGqvhFzIxVKZQlXp6iZrcRmfoLc3z+MIweOItHB7PjtIijPYFqzt1dnLmhfXy0L4fsulGsQiDJP67ni5t3YU40NEVJDFSn9VPJTlSmRbq5SX2RS0JK7hzkFaxea3Gy1dthp8AFHwjb1vWxsz55i5mZmbKnw1IIqAjecmj/P7YVEjyhaZ+SeI4vhzCSHkGlE48IlE9Dsr72KAPEaB1EU8LcGNCERh8lPEouqpliwdfFiZdp+QAfIWM78s4ceIXYNxh/w+4fd7iGWXZH6/WCv612DyyPju5jlB3ruQSc30iJt9XeouhX6J63k9NYXkNaDZ8ygLBrSuYX/Rtsoj0/ris29f8TOdpnnzT9llwwBdWq9LWaHr0ZsLZqLupsuedfdL+bLfmrDzfgrrmmdhUsKq+NVBTmZvy8RYb302SibmzRgZu0MvRqQPnWhdm3F3vZFQa3U/RFHNplzcEll0dEntU3vOOYSZR0ltV7JdwejNb9Vyf4uIcrqqrWGpxNrbDVEFoXFyP3JiYZG0PQ1Dk/9J4o2r1sLeMVabEgA+gygdwa+CXI10tH1s/q3zq0i6fJyZ56M3n4QStKlvMPP9Zap4VItHEvItjGU1UQjlOVMJQAbKxIRQVrJcNQaPAjglRkQ9FpxYkkHsZh0SIzp7Unh4oJXBh9siM3lki/aeTnTKr1cCfAXfhGs6xu0yq2NU8xmjeK1Ho4JRlM5lWRO0HjGXt/XyyIp5TQT2UulpXjr7k2Ln5i9/7vY3vjr3zJ3uBTNVkzsmY/dmSb7/LiJN2baaTHHfkwD8KzPfCmARET2XVFg3VtOuOWHBtX6QBLZJJu76WJh1rpothIZJBzMFE/LM/JAQmLICKo4C8GtrAWCu46hYHzwtIfmQ+e4wq4/3FVfhE9bcpCV8Pr64ftIuH1VBrcz9AHxMznuauIcbtnEQTDXfHZXw2S5ICMJD9eknXE2Sr7k5PxA3XHyQmkFwNIDpQ2SFvIzequ5JOtiBMT8tEEX4jLe+o60tTl6ODZxS7DrI8ufvaOl5HNuahRMe6KdG8rw8Y++FNGPGohBg/OC+H9SfvdNdB36p7oe73X7Uddlnj/met6HpAwUuFQOPCwAp8Pt4I1xmZhCg/LQHMEqdm18i4nmB1ourjcOzIwmJ6Mfi4fijlcjvWSWEtKy4LwfwB2b+OTNP6aM0UCpWuJas5NjBoCCre8TkBm+E3co/yUKbrL75KDM3yyLUrj5/EN4dig8reKtozYH16A34QKz6xs5xHU0qhah+qvvvJInrfwTwn4jqCE7ahuRVbX1Ptsp8DXV0qrJer1S6nYqWTl7CzNfLQ6TLWDBfYOa7EAl/VK0r0XIFrkFUG2u3MpnvB1vleHwrCMOzTH22csuWWL9dKu/tablDlbVC2EPIU4k7M6lWovndS9JWTUdhJayRaPqihWrRjBnhohkzwkvuuTpTrBt38jKPZjWpzo+GYaC7ctuvfWXcwWNeHf+xTbuu/t26PVbMTTdverlReZ4fUAbMYIJ+X7AZgzUY8FJpBRDpUvEVJrqBguDWm2bs9rodvDtAy4CI6M/M/LissM+ViarBWowZ9+J4qcJxHDN/gYgeqGK7DH+QXZFEVmHCXl21Hk7/MqK80EOt9/YUd+Ff0LsH4j7ojWpW4kJ9AVuGqi+X35oyXR9h5qslmtnMK8dY86EnbtiHKqhhuQ+iUkuHWH1tz1fdiDSqgnUPyCrmO7EG+tqeL/8h7ldvEPOlQqRhXu8PgF2vQVTheHKMWMwJHYZoC4Mb5ft6QPmx0c1/UnQAVaaC/EREVTtCyf/av0x7LxmfNHqTRV+2CCwedXMootI3Brshyj+LExgA/J2I2qvZb2eYl0jUgtnUSq16EWaEAHDRX285Pc98iYI63s9koIMATHoThUVOM1Mhu92oV6ac37h85+mbdnn99rYPrLguPXrTK6NI+V5JZREZJfxeJi7y0hmlPB9BvnMlAz9nxk3zztxlNQC0tLSo1tmzB1V2ynJvdSCqHn4HIj32k/IM7GIRmalJuCeAm5n5VCJ6JubyDmKWkplA6gfZJbmELTC6rfp3Na7/9vTzJmZ+2IoaNMRyXMzCOlD6rCRW7fOI9tsyutRqKadl71Cxr8yPy6yNHw+N1U1dIgv0dwV+WQvzCQB+Jd6feA3BhyQ36kVERRQ2Wfdbyb9PF23V29b9a1WTj+eS3UxE/zlUcotfpWWkiOgNZr4WwPf7CLucycy3yaDmQTD3w9JGXSwRE1ZU4CqrREs8glBZUUewtxGXIJEzYqsfM7gOieU77GUVlIy3/Uit+/6NxdWCFmol0q0Az7rmmhSmjT4RpL/Emk9K1+VU0F1AUMiHipQiZhVFexAQFNmnkgr9+uZXppyrV076xObJb97RtsfKmzLNm5c0Kk95AaXBjPcMkUWuQmLPTysigg6CJWFQuklnvBvnnbzTm3bh31YijdbWIctVsoIz/gbgb7K/1qcAfFG8A2wVyp0E4Apm/ozlEmOze3MCgU0aZAj6WKuYtUE7ovyykeKFIGu/sEuFmAIrFzQHIC/3Il5Y/CkTxWld7/2yqDeL+F1kMb1M5qZpiCpHwCKTB4ioq5+F7zeFvIxL2aQDXY5o88vufsZw+zD3b3vCnN4whK5KUgP84Vxh/riFRZYVdoopBzIIAnvO0sHiEYOZWF7WNPRGqdhh9HmrxJONxxJck/Z2BztZK4QDy9RA2wxrC4RafVqnL1zogcCt1KovuefqzKyHbz2V9m66jUjfkcqmP05EKujOS7kZ8kBE7y7tocBBkdNhtwozo0e9vNvMcfd96Db1xL7faWtr+EC70oUgheLI18iYmcHaS6XJS2VUGBSXlILit4LAO3HuGTt/d97JO71pykqZXLChXsFapaJM2PRbRHS1uBZvt8apmTA/CuBQa3sTz0qSRiwPbMpAx6s8+7vKhG///g0i6hopUbjWnPQ3sZLipZ52l+sYh179y7cDtvDunTvaYkFeH8GWAWCjrAV+yarJqPrYpeCfYho/AFxORNeIduaXqYnoWfUjhxOrEubjHRLy2ap+medEDaBeIRHRKnElJiXsmdXhBcxcL77egWoC3VaWelI+2EFWQuhhMUJlS+9annCYV9BbgVrHrmVXIUTINexdhmCf6aeK9bCuMqcvXOgBwKIZM8JZT12TuviRW04pNIy/DcAiP505FYRUKV/QPcTVn9hKRAwFDktI6W4VZsc0vTx55rg/HX6LeuKDV61bX7/HBi/osohM8UhyFTKzVn6K/FRWhUFxaVAqXI5S/mPzztjlqvmfmrTSVN8wZaW2tismVvfQlyoSMy2r35xD0hg1Y3+LlBgAezPzdhXuC7XFpC+T+kEJofnP9rUZ7DZa7Q9kfumwiMS2MA8VAjhCFsVmwfoWegsW2IuCJeJa3KJyh2xcCfTmhoXWfXmmn4XEfmIt29HUfwcwz1rYBEk1Ea36kcONxVZFpZ65lZkbrBJlPJAXqtxqJGklNs/Kw0qywo5ClLi3DgMX6mARGCV8drgVqhm3ksw5vQRJwrMnBFmdPpdAYMa6O0C+l1R7ka0kxLy14q0NVyG3KAC8aIbRuG49Gd1Nd+kQd6Zy2U8QUaaUL2pRilXVkwARGAocRERWyo1temXK+ePu+8hd9Ni+/922oX639X7QEaY5T7VukTGgmTV7fkalcg1Kh6U3g2LhP0ooHT/vk7t87+YZ05a3tLQo3koWVyV5NfLQmiKt6xHtoWQ/a4zeHEUdq/vXHXvOP1iG7PpMo5G/EwCcEHvWC0iuXbo1AgJ0mU0xBzO/PGjpS4ZgjpPn+SixYkpWxOFaywIwelonYjKFeHE+IOkRB8WO/SQRrTJzUpnz2zWBKJ8S0u23tJSMq2CYLdwn0Zu2YUd572pcgBiCkEQM0ArbAOD/lRlUkIF1EXq39KZBuBHXl9GYdgWwMzOPMxZTgkb1rDnnWJBIYIW/J53bh2QQT0VvaL6KuQGerKG5OCIucRW2PNDiX/yXeSdd9NAtd7LWd6ZzuZOIiErdeQ2tmSgqYDv4jGgFBEX4QbcK/frml6ecO/73R97hPfbB77W11U9tV0F3GFlkVFNExsZV6KeUn86RDoNXw0LXbHipD9185i7fX/DJqW+0tLBqaWlRra2temstUIw1UGGCqLGa1ic8c1TGQ7A4tqjLAPhsNQRqlZG6CFFyqrYm1qdiVsnWQpCQX5qOFdgdbHFf896+zDzFqrlq7/cXlgmKeNDS0EOxig+QNnayPFNAb/Iy9bOFSRzFCid+slygalvLG5aF+2ZsjmQA2wE4a6BlB+NV7/1BZrQvQrT757ExPcmc2AmI6gQOZoC9hKh6wJhYIIc53r4ykKfEVqXmxj3RR9t/kxVkJhagYVwtDbJaVbGtWRSifLhna0H/amFWrUS6lVp5+sKF6THjSye8TWomK/p4KpPOBIUiSt3dIUBKLK6tUNojCvZIExuNrHH5jmd0TF51Z9vuK+dnxmx+uUERJPx+GKMWo5EbBWd4isJi/lVFam4Y8M3zP7XLa6Y/Z1ewyh2KXZkBNItVZeoj9kWWJAFIkxP2o1odi+A1Cbu/QRRQYLf5GWa+l4h+I3rJu9xO1kRpKuMcCeCSWN4kAZgnOwlv7ST+PLas9GEIYS+TNBwjZNWXpWIX95WArikxCeEMa1GckmM/3cfz/pzMU1Otz09EFPFsp/a8VWZOimNjwuJkL1OaKSn4Q67d3P+jEAV70DCVtzO7WN+OaEsVe4EwS8bfE5ICFfZRmJpiAXhbbM+jBlFNW0lxx6uFBJIspPQANpaMV+zutAYOyhT2PUCOFSeht6wahUka2tOIQlCRkNA8EZH4+sEyp/iitI9hqr7Ro3G1EumjH2jxZz58y8dHb68XwlO/9nOZMxRRpiqNayiWXu/SyC4Qjey7w6qRcYRI40rnVBiUXgtLxRZiOulXZ+z87fmf2uW1lpZoZdfaz5YVQ0RcQJT4fw8zf4uZJ5h6h1bdO88W6WVi2h5RRKI9ZjutcR7HrTKJ2ukfDYi2Zf+YraEkieRyzA8j2lZpbGyCehLALdUUoh1E2Hsh9qyaZ+4UE1kc01TCCp5L0yd/jkUINoi1OcG6ruXozf/SZfJWH4+1fyKAGbH3noCE4fdzfkstl6bp38MBHGs8Stb48KwaiSEzfxxRoN3kMjm02zIH7E6x0O25ZxKAXzDz/qLjsVXnMz7m4/vg7cTM5zPzxzCYC7O2HLkXUTjqkA9i60F/JIFwyRI7TyvTeU8CWBd3k1jkuNESU+MaXg5R+Z5yu6w+PCzVtxM0rgv/cutJe/rTfqOAu1LZzOlEKlfKFzVrPTCNa0gsstrQyKL9zqKownRdgwqD0lvFQvcV5PvH3nTGzt+ee+Yur7a0tIircOsSV5lq8YcB+A6APzHz15h5R2szwzBGMPuJ9rxfbMH1pFnkWRO5sTAWyyIz7mLcCcBCZv4hM+9pdFxrMvGYeQozf1tW0XvHtlDpRLSrbnslhWiHqL9eiFVjYACnMPN/MHOj5V6awMxfYObPVtj+Y+jd6JYtDcuOtnxC9KckS8G4WB+OEeEoqx5gj+Ymm5BSBTvTL7b6nBGl8vyUmT8UGx+h3O/RzHwlgFvEiuRhIi97/LUh2kfOJmuNKGbhbmb+pmy7Um7MEzOPYeZTmPmXiHL05iBKHfH8wZ9nT6Hf47BlvtZQ4h+IwlTHJuSD7W+5QuNJxo9b4ncY387C2jxzepnjnmcFidjuw4JlFapBFC6uVuOiVmrVrWhlZqZZf11wPIG/RMyfSOVyqVK+gCCfD8EQVyHVQNVgijQysNHI9ArJI5u68qbM6M1LGpVSXqCGOI/MdhWSQhCUVoRB9zx4mDP/9F2XmzwuYDZaW1uHq8CjGTuhWPo/BPAvzPwEencPD0XLOBBRNYdR1oTmyVj8kWzv/i43niywfo4okODTsSjdRgBfExngJWZeLsSUk9X7XpbVpa1zLgD4NyL6yzaq/2mv5v/D8uqQuP+vAnAOooo4DeIO3BHAP5j5t9I3SSRrRxE+IwtWHasSQfYiuswmoNoqT7VOdB5OIOEuRDljlVic65j5Gll8aIuwp8rEf6fMXRtl3t1LXHXTrOZKMoZ2wPCWllok4+8bMT12B0Slsb4syeBLEOm7oVzTWERBdNPkfnrWbxsBDJrAjAXyIKJtIT6TUGJqKAau2a7kI9YAo9gGbXHfeNEKbe0Lz/WRLD2hzP5fr6G3tiJvS43r6Ada/D1T04676K8LZirgE34mk7M1riiPC6i98vd9aGQr5mfGdGyhkTFhgJZtD3GlFHkehcXicoDnhaGae8undlpq+hOzZ6O1ddgLL79klWYqySQ1SfSXM1A+mIHQW+qoFcCdSW48Ox2FmS+V9v8JvSHdZiIeg6h+X1INv9B6psyGmJcT0S+sigvV7Oxrv6pdzS9j5nmIko/DmHUxLTZ5B7F6fP0V931YCIwS8j3f6WsusYhxuRDh8THrxxDQo1ZJO65gXr0WUSTkp2L91gzgc/JKGh8+Is3u62KtfyEWeLPV7lXS+JPfXylj6CvW2DVjeUfLUu3rnApybR4izbfkD5F/usTMPxVXXv1QWWHWA7iZmf8eSw7s60IJUc2y5/sYLNqy7lYi2ruGE1wtNEz6F01fGNUqbCXSLS0t6s0T9jxesbqYND7mZ9N1YbGEUr6giYhE40LN1/EBAWEJKSpGGtmUCxpWbH9qx66r7163x4qb0qM3vdRIA6i1aAIRIuLyKSh2r+SweFPA+qYFZ+62xFhcs2dv/eCMStzv8s97ERXIvii2EAtjEwdZpGWe2dcRVa+/rq/dma1nqI2ZL5AF2yXoTfo3z4JOKNCtYhF3fwbwHbG8qIp+NOHuZBFhuto5QibDq2RVfnKZ8ydrO5o16A0i6w/3J7jcyKql+kpf+/0Zy4yZH0SUWI5Y/UgA+KN4rJKsuHILjy8hSoU4J+ZhCmPXq6zrfgZACxHdLW43sl6pCvoiHWszPZh4CbmWPDN/XebOb8h8q2Kapi5TuJcsa7sortrvEtGQJB6a0N7HEAnGQx31QlbEIKooArkYkgme9KBZOtg7fQjgVO5cBpAIWl04vKVxzXroluNXHz/tDg/qnkwucyYpqhtWjWsoNbLQ1sjupMf2/UFVGtmWGlej0mGwOiwWW3VIx8375OQrFpy52xJmpm2scVX6cHcR0b8iEvt/KJ6GwCKqlLx8y0p7GcC3AZxARNda45grmEQ6iej7Eh38bZlMjOVnHy9lEc16ALeJFfAJQ15VelDWC3EW5XhF+X97pdU7rOtcA+BsAC2IgjrYIlrfWt2/KGRb7KdcU09NU9FWumSlb86zDcANFZR9Mu/fgSi1wFTtL8q/n0S0VUtFXhvrnq0BcL7IHH9Ab7kwPzY2tMxjXwfwcSEv4y0qCOEVys111nUV5N7YffCSLAYG5HGyroWJ6AaxUL8snrtOa2GTShiDELfsA4jKF54q1/cwM0ctJ1gmSh6UA4io0F+hWqv8yZ6IRLbxfYTOm/aXAjhYimqWbd9qew8xwcf0Y+GZ9q8iom9V2Pa/IMpp437EVZO4eTwRPTLE/v8ejcsU3Z318K3HgehisD4tXVeXLuULAOsQPAQ5XH0JM0ohDEsb9xhzZMf4xl13KBa7mUhtxUgLCav3MyhC6Vy+bfOUt37TPXXlTZnmTYublKe8EmXgQaPIfvtVE+akXs98oM7XXaz8rCJPISiVXmfoWwKNaxecucurvRoXasFV2N9GhSbycIy1++8ksco0okKtqxEJ+69K4ETV+8/FN8GUIrPmeDsg0td8WfG3SVj4i1IBBIPZ805SUnZCpFF1AniTiDYNpM+s/pqASBvcVdxqJJrPYgDPSZBWNW374spqlgm0AKBNKg9V006jWLiNMhd1AHhrCK7XR1Q0eH9EW7M0WZuMPoco53VjzCLMICrE0ChuxRVEVOznmHXSfqMQ+pvV9mV/XCH/Nue2t9zDMWJlhXLcNZb1u1ai3rfoF2LmMKGgLcmPDqyEwGJkcKX45cMyofrGd71Y2s/3QzJmW4EcgHtiOlg5AiMAM4jotr7MdesmHyPunL72rwmt7QA+SkRrhorATLIspG7h6InhMUQ8k6FOS2XSuaBQAqBDMCnQ1re2tjmBbXGzmaDSKMHT2cLajsmr7uzefeX8zOhNLzdkPPgdXNd+1cQ56s26DzalUUIQlFaC9fwg5Lm3fGryKzUSnDGgaNtKx1K13x+K31eQo7atiZ8qqEaxzTeYrWQuG+D1qr7cjrV4n4biehKuzS5rBj+BYDwrE5wHENBxNaLk4rPQdwX8h/sjr5jO1i27nx7Tjz/WE33g7335rGOfvYxIXN0X/Vfuf1DIi4bq4WhtbdUtLVDvfOT6YzilZ4HoZD+TaXyXxvVe33krSSObHGlkO6++e+1eK27M1neuZGbdVCqVVvm681cBe1sQVy1oXAOsboMKqywM+vqqPV5MtxsU6cSugweRI8r9nH/V/RRPmh3IeVqBC5RwPoO53rCC+8UJ0dZV9/tQ3qtBXk+/Y5CY+YeIgi8mWls0rEYUAfM/VP326CyukIvFXzneyqcgMacfAPA9InqrQuvOLrR5pWgG2wnJKstC6hS3x/8Q0e1VnvNJiLYvmCqmsx/bmmItIqH3KvRqazwE+h5f9tefHLxZT/qGAp+VrfO8Ur4ArVkTQFvTVVhzFliCaxGsmb00cdpHprAp2Hn5gucf3LDj7U/mjlv4u1OzS3v2OJs9m0aKxeXg4DCEARLis80J0RQBdEkFDAzSZ5tGlHy3xUZ7A2075k83kTFZsaSKQmKbpc7hQNr1TH6BJSSanU6LJpFxKJOSQeBrnjjh6vXhlC++He7f3qXH1xNxTpEGsx6W+IxaIDBZxrKXTiulFMJi4fWQUvOWT1TXXFUXaTItLS3iKiRHXA4O70P4Jkw9VmdswP5a24QWsbDYn3g9ANG7Y6h93/KbEFtuwjYk590fMrTZ2zn7rDc2eCW9Ltxz0zvBPl0dPLFBUSpDCBDF2dD7YkAa4vJTKaU8j4JCcXnImEdUmHvhblkrj8sEZ7S6p9jB4f1KYOXKIdEgt0e3fNQYqrYty44q8fEPcDdcVJCwiKHde4CgVZZSFDRt7z3XNFYt7Vind29fHezvdeoJjcqjDHEguU5E703i0gwi7adSnvI8KhYKK1AszdMezZ21e3bJtiyy6+DgMEIIbGtOzK7dany5DGZoRkqlvELDRPV8/VhvcWdbaWr7an2Q6tQTRpFHacWl95hFxhoM+OmMSqWV191ZeAul0vUMzJ25R26ZWbDMng1qJdLO3nJwcIhH1jnU0BaLoSYAKfJV2LB9+oWGsXppx9pw2vrV4f5+l57QRApphXDYNLKh1rg8T6FUKL3ZVSzeUtL45Rf3zL1m53HFt1BwcHBwcASGGo6sASPUAJCG54UN29NzDWO9xR3r9J4b3g728UeqRvYujatYWhmWgvms+Fczp+YWv1vjcnBwcHAENmKJjDWgkULKKzVMpOcathuBGhlHu1hq3095yveoWCi8QUF4swp47vnTsq84jcvBwcER2HuWzBg6ci1iJGlkvRZXWvlp5eU7829TGF6vCb+atVtmidO4HBwcHIHBaWS1pJHZxKV8RUGhuDrfhfkh4xcXTc282kNcvSWBnMbl4ODgCMxpZMOnkfUEZ/gp5aU8CgrFN4NAL9Ac3DBrauM/gF6NyxGXg4ODIzCnkQ27RmY0Ls/3PT/lU767sEqH4fyQceOsqbl/jORahQ4ODo7AHN6DGpkdVeinPS/fmV+rA31jwLjxC1MzL22hcbWSbnUil4ODgyMwh+HUyLYIh/c9KuWLbwdheCs8+uUFUzKL4TQuBwcHR2AOtaSR9RCXHxFXUCyu0jpcoIPijTOnNT4PiMblEpAdHBwcgTnUgkZma1xeyqdiV/5tBKVbOQxu6CEuswOy07gcHBwcgTkMh0ZmG03MYADa81NeOut53R35dWEYzIVS11+4e+bFuMbletrBwcERmAOGRSPj8Y2e8jNAAAK054PIy3mlYnFNvjNYQEy/vGBq9iWncTk4ODgCc6gpjawtnLZ+dbBvpovHEAMNOtBrC0Hp1lKh+4Yv7j36WUBchS6Py8HBwRGYQ01oZJxij0r1O2aea9hOLdZr9N5PhXzAb71A3Tdz9+zTPTsgz54daVwuHN7BwcERmAOGtVYhJBweyk/7yHeF7/iUn7+b9/vr/3mfn78oX6IWo3G5RC4HBwdHYA41QVw+KS9FVMzrNboU3go//OnnD3x8qa1xSZFd5yp0cHBwBOYwzMRFYM8n5flEpWK4OuzGrSFK11946FMvAkBLC1wel4ODgyMwh9ohLhBrz1ee5xMV8+FqDrEgCPI3zDziWUlAhmwkCRcO7+Dg4AjMoXZchamM8vJdwZowpPlhqG84/4jHn5fvyH5cjrgcHBwcgTnUCHF5Pik/RVQs6LagK1xARD89/+BHX+khLoAoIi7nKnRwcHAE5lAbxOX5REFRv1Mq8IKgFM6ZKRZXSwskj8sRl4ODgyMwh1rRuDzl+SmiQl6v4ZAXUbE459wPPfWsHZzR2gqXx+Xg4OAIzKEGiAvMnq9UOuN5+c5wfT7U833g+nMPefRZyVWWPC6ncTk4ODgCc6gpjcujUj5c391R+rUm+smFhz76oq1xtRJcHpeDg4MjMIcaIS5PgjOKek2xq/TrYog5Fx352DMuOMPBwcERmENNa1zFfLi2FOK2QOvrZh7++NNbJiA74nJwcHAE5lATFpelcXUFGwp5LFCevu68gyLichqXg4ODIzCHmtS4UimPivmgvasrvD3U4U9mHfbk353G5eDg4AjMoXY1rjRRqaDbCt3BbcUS5lz0ocee7CWuFiJqda5CBwcHR2AOtaBxIfQUpaRyxvpiQd8eFPnamUc+9gQQT0BudcTl4ODgCMxhuMmL2POJ/JSXyncFmwt5LFTE/3fewRFxGfJyCcgODg4OjsBqCh5xulQMO3SoFzLhZ+cfEoXDg0EtRuNyARoODg4ODrWG65469NjrnzjiSNvaauEW5XrGwcHBoTz+PzzKrAsrdZSyAAAAAElFTkSuQmCC" alt="NW Software">
+    <div id="userbar" class="userbar" hidden></div>
+  </div>
+  <div class="stripe" aria-hidden="true"><i style="background:#ffdd00"></i><i style="background:#fcb415"></i><i style="background:#f26f21"></i><i style="background:#f6921e"></i><i style="background:#67c3a8"></i><i style="background:#9fcb3a"></i><i style="background:#9ddcf8"></i><i style="background:#5dafe1"></i></div>
+</header>
+<nav class="tabs" aria-label="Seções"><div class="wrap" id="tabs" role="tablist"></div></nav>
+
+<main class="wrap" id="app">
+  <section id="s-resumo" aria-label="Resumo"></section>
+  <section id="s-charts" aria-label="Gráficos"></section>
+  <section id="s-ev"></section>
+  <section id="s-plan"></section>
+  <section id="s-cal"></section>
+  <section id="s-fichas"></section>
+  <section id="s-users"></section>
+  <section id="s-arquivos"></section>
+  <div class="foot" id="foot"></div>
+</main>
+<div id="auth" hidden></div>
+<div id="admin" class="wrap" hidden></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1/dist/umd/supabase.js"></script>
+<div id="modal"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script>
+const MODE = "api";
+let clientName = "Fundição São Francisco", SEED = true;
+const DATA = {"gestoes": [{"id": "instalacao", "name": "Instalação do Sistema", "short": "Instalação", "color": "5dafe1", "deps": [], "sections": [{"id": "g0s0", "name": "Preparação e treinamentos iniciais", "areas": ["geral"], "items": [{"id": "g0s0i0", "t": "Preparação do Servidor e Instalação do Sistema nas Estações"}, {"id": "g0s0i1", "t": "Treinamento - Cadastro de usuários / Controle de Acessos"}, {"id": "g0s0i2", "t": "Treinamento - Alterar a senha do usuário MASTER"}, {"id": "g0s0i3", "t": "Treinamento - Instalação do sistema"}, {"id": "g0s0i4", "t": "Treinamento - Atualização do sistema"}, {"id": "g0s0i5", "t": "Treinamento - Consulta de Dedo-Duro"}, {"id": "g0s0i6", "t": "Treinamento - Área de clientes no site da Northward"}, {"id": "g0s0i7", "t": "Treinamento - Backup do banco de dados"}]}]}, {"id": "comercial", "name": "Comercial", "short": "Comercial", "color": "fcb415", "deps": ["instalacao"], "sections": [{"id": "g1s0", "name": "Preparação e treinamentos iniciais", "areas": [], "items": []}, {"id": "g1s1", "name": "Cadastros e Parametrização Fiscal", "areas": ["fat"], "items": [{"id": "g1s1i0", "t": "Importação de Cadastros (clientes / fornecedores / produtos / outros)"}, {"id": "g1s1i1", "t": "Cadastro de Empresas"}, {"id": "g1s1i2", "t": "Cadastro de Séries"}, {"id": "g1s1i3", "t": "Cadastro de Naturezas de Operação"}, {"id": "g1s1i4", "t": "Cadastro de Tributações (ICMS)"}, {"id": "g1s1i5", "t": "Cadastro de Estados (UF)"}, {"id": "g1s1i6", "t": "Grade de Naturezas de Operação"}, {"id": "g1s1i7", "t": "Grade de Tributações"}]}, {"id": "g1s2", "name": "Cadastros e Parametrização - Comercial", "areas": ["vend", "comp"], "items": [{"id": "g1s2i0", "t": "Cadastro de Clientes / Fornecedores"}, {"id": "g1s2i1", "t": "Cadastro de Cidades - códigos IBGE"}, {"id": "g1s2i2", "t": "Cadastro de Itens / Grupos / Subgrupos / Fam. Comercial / Un. Medida"}, {"id": "g1s2i3", "t": "Cadastro de Compradores / Avaliadores"}, {"id": "g1s2i4", "t": "Cadastro de Requisitantes"}, {"id": "g1s2i5", "t": "Cadastro de Departamentos"}, {"id": "g1s2i6", "t": "Cadastro de Tipos de Pedidos de Compra"}, {"id": "g1s2i7", "t": "Cadastro de Classificação Fiscal"}, {"id": "g1s2i8", "t": "Cadastro de Depósito / Localização"}, {"id": "g1s2i9", "t": "Cadastro de Condições de Pagamento"}, {"id": "g1s2i10", "t": "Cadastro de Tipos de Pedidos de Venda"}, {"id": "g1s2i11", "t": "Cadastro de Código do Item no Fornecedor"}, {"id": "g1s2i12", "t": "Atualização de Preços do Cadastro do Item"}, {"id": "g1s2i13", "t": "Cadastro de Tabelas de Preço"}, {"id": "g1s2i14", "t": "Cadastro de Orçamentistas / Aprovadores"}, {"id": "g1s2i15", "t": "Manutenção do Custo Autorizado para Compra"}, {"id": "g1s2i16", "t": "Cadastro de Tabelas de Prazo"}, {"id": "g1s2i17", "t": "Cadastro de Modelos de Planilha"}, {"id": "g1s2i18", "t": "Cadastro de Moedas"}, {"id": "g1s2i19", "t": "Cotação de Moedas"}]}, {"id": "g1s3", "name": "Cadastros e Parâmetros de Comissões", "areas": ["vend"], "items": [{"id": "g1s3i0", "t": "Cadastro de Representantes / Vendedores"}, {"id": "g1s3i1", "t": "Configuração da Grade de Comissões"}]}, {"id": "g1s4", "name": "Gestão de Vendas", "areas": ["vend"], "items": [{"id": "g1s4i0", "t": "Orçamento / Pedido de Venda"}, {"id": "g1s4i1", "t": "Emissão do Orçamento / Pedido de Venda"}, {"id": "g1s4i2", "t": "Análise de Crédito / Liberação do Pedido de Vendas"}, {"id": "g1s4i3", "t": "Emissão de Propostas Comerciais"}, {"id": "g1s4i4", "t": "Gerenciamento do Envio de Orçamentos"}, {"id": "g1s4i5", "t": "Gerenciamento da Taxa de Sucesso - Orçamentos"}, {"id": "g1s4i6", "t": "Comissões – Lançamento Manual e Ocorrências de Representantes"}, {"id": "g1s4i7", "t": "Fechamento de Comissão no Contas a Pagar"}, {"id": "g1s4i8", "t": "Follow-Up de Pedidos e Orçamentos"}, {"id": "g1s4i9", "t": "Cadastros / Consultas de Curva ABC de Vendas"}, {"id": "g1s4i10", "t": "Previsão de Vendas"}, {"id": "g1s4i11", "t": "Consultas de Previsão de Vendas"}, {"id": "g1s4i12", "t": "Relatórios e Consultas de Vendas"}]}, {"id": "g1s5", "name": "Gestão do Faturamento", "areas": ["fat"], "items": [{"id": "g1s5i0", "t": "Nota Fiscal Manual"}, {"id": "g1s5i1", "t": "Nota Fiscal Eletrônica (NF-e)"}, {"id": "g1s5i2", "t": "Nota Fiscal Eletrônica de Serviços (NFS-e)"}, {"id": "g1s5i3", "t": "Cancelamento de Nota Fiscal"}, {"id": "g1s5i4", "t": "Carta de Correção"}, {"id": "g1s5i5", "t": "Pedidos de Venda a Romanear"}, {"id": "g1s5i6", "t": "Nota Fiscal por Romaneio - Geração automática de Notas Fiscais"}, {"id": "g1s5i7", "t": "Nota Fiscal de devolução de compra / venda"}, {"id": "g1s5i8", "t": "Voltar Número da Nota Fiscal - Estorno de Notas Fiscais de Venda"}, {"id": "g1s5i9", "t": "Nota Fiscal com atualização de estoque terceiro"}, {"id": "g1s5i10", "t": "Relatórios e Consultas Gerenciais do Faturamento"}]}, {"id": "g1s6", "name": "Gestão de Compras", "areas": ["comp"], "items": [{"id": "g1s6i0", "t": "Solicitação de Compra - Digitação Manual"}, {"id": "g1s6i1", "t": "Solicitação de Compra - Aprovação / Desaprovação"}, {"id": "g1s6i2", "t": "Geração da Cotação - Selecionar Cotações e Fornecedores"}, {"id": "g1s6i3", "t": "Gerenciamento da Cotação de Compra"}, {"id": "g1s6i4", "t": "Pedido de Compra"}, {"id": "g1s6i5", "t": "Emissão do Pedido de Compra"}, {"id": "g1s6i6", "t": "Liberação de Pedidos de Compra Bloqueados"}, {"id": "g1s6i7", "t": "Geração do Pedido de Compra pela Análise de Vendas"}, {"id": "g1s6i8", "t": "Geração do Pedido de Compra por Pedido de Vendas"}, {"id": "g1s6i9", "t": "Relatórios e Consultas da Gestão de Compras"}]}, {"id": "g1s7", "name": "Gestão de Estoques", "areas": ["pcp", "comp"], "items": [{"id": "g1s7i0", "t": "Requisições de Materiais"}, {"id": "g1s7i1", "t": "Acerto de Inventário do Estoque (Digitação)"}, {"id": "g1s7i2", "t": "Acerto de Inventário do Estoque (Exportação para Excel)"}, {"id": "g1s7i3", "t": "Acerto de Inventário do Estoque (Fichas de Contagem)"}, {"id": "g1s7i4", "t": "Recebimento de Notas Fiscais de Compra"}, {"id": "g1s7i5", "t": "Recebimento de Notas Fiscais de Remessa (Indl., Conserto, …)"}, {"id": "g1s7i6", "t": "Recebimento Físico - Recebimento de Notas Fiscais no Estoque"}, {"id": "g1s7i7", "t": "Transformação de Itens (Embalagem)"}, {"id": "g1s7i8", "t": "Valorização da Nota Fiscal"}, {"id": "g1s7i9", "t": "Controle de Carga / Embarque"}, {"id": "g1s7i10", "t": "Fechamento Mensal"}, {"id": "g1s7i11", "t": "Controle de Períodos"}, {"id": "g1s7i12", "t": "Cadastro de Tipos de Movimentos"}, {"id": "g1s7i13", "t": "Transações Diversas do Estoque"}, {"id": "g1s7i14", "t": "Acerto de Custo Médio Mensal"}, {"id": "g1s7i15", "t": "Controle de Embalagens"}, {"id": "g1s7i16", "t": "Relatórios e Consultas de Estoque"}]}]}, {"id": "financas", "name": "Finanças", "short": "Finanças", "color": "67c3a8", "deps": ["instalacao"], "sections": [{"id": "g2s0", "name": "Preparação e treinamentos iniciais", "areas": ["fin"], "items": []}, {"id": "g2s1", "name": "Cadastros e Parametrização da Área Financeira", "areas": ["fin"], "items": [{"id": "g2s1i0", "t": "Cadastro de Portadores"}, {"id": "g2s1i1", "t": "Cadastro de Bancos / Agências"}, {"id": "g2s1i2", "t": "Cadastro de Contas Bancárias"}, {"id": "g2s1i3", "t": "Cadastro de Espécies de Documento"}, {"id": "g2s1i4", "t": "Relacionar Plano de Contas aos Clientes e Fornecedores"}, {"id": "g2s1i5", "t": "Cadastro de Centros de Custo"}, {"id": "g2s1i6", "t": "Cadastro de Plano de Contas"}, {"id": "g2s1i7", "t": "Cadastro de Tipos de Receita / Despesa"}, {"id": "g2s1i8", "t": "Configuração para Impressão de Cheques (Impressora Matricial)"}, {"id": "g2s1i9", "t": "Parametrização das Rotinas de Cobrança (Cobrebemx)"}, {"id": "g2s1i10", "t": "Cadastro de Carteiras de Cobrança"}, {"id": "g2s1i11", "t": "Relacionar Tipos de Receita / Despesas aos Clientes e Fornecedores"}, {"id": "g2s1i12", "t": "Parametro para Ativar / Desativar Controle de Liberação de Títulos"}, {"id": "g2s1i13", "t": "Parametrização das Rotinas de SISPAG"}]}, {"id": "g2s2", "name": "Contas a Pagar", "areas": ["fin"], "items": [{"id": "g2s2i0", "t": "Manutenção de Títulos"}, {"id": "g2s2i1", "t": "Relatórios e Consultas de Títulos em Aberto"}, {"id": "g2s2i2", "t": "Baixa Manual de Títulos"}, {"id": "g2s2i3", "t": "Estorno de Baixa Manual"}, {"id": "g2s2i4", "t": "Baixa de Títulos por Referência - Lotes de Baixa"}, {"id": "g2s2i5", "t": "Estorno da Referência de Baixa"}, {"id": "g2s2i6", "t": "Previsão de Contas à Pagar"}, {"id": "g2s2i7", "t": "Transformar Previsões em Títulos"}, {"id": "g2s2i8", "t": "Inclusão de Antecipação"}, {"id": "g2s2i9", "t": "Relatórios de Títulos em Aberto com Antecipações"}, {"id": "g2s2i10", "t": "Baixa de Títulos com Antecipações"}, {"id": "g2s2i11", "t": "Devolução de Antecipação"}, {"id": "g2s2i12", "t": "Manutenção de Títulos Baixados"}, {"id": "g2s2i13", "t": "Geração Automática de Títulos"}, {"id": "g2s2i14", "t": "Relatórios de Títulos Baixados"}, {"id": "g2s2i15", "t": "Alteração de Vencimento"}, {"id": "g2s2i16", "t": "Estorno da Alteração de Vencimento"}, {"id": "g2s2i17", "t": "Alteração de Valor do Título"}, {"id": "g2s2i18", "t": "Estorno de Alteração de Valor do Título"}, {"id": "g2s2i19", "t": "Relatórios de Despesas Apuradas"}, {"id": "g2s2i20", "t": "Relatório de Movimentação por Evento"}, {"id": "g2s2i21", "t": "Devolução de Títulos"}, {"id": "g2s2i22", "t": "Estorno de Devolução de Títulos"}, {"id": "g2s2i23", "t": "Previsão Orçamentária"}, {"id": "g2s2i24", "t": "Relatórios Orçamentários"}, {"id": "g2s2i25", "t": "Liberação de Títulos a Pagar"}, {"id": "g2s2i26", "t": "Remessa de Agendamento de Pagamentos (SISPAG)"}, {"id": "g2s2i27", "t": "Atualização do Movimento Recebido (SISPAG)"}]}, {"id": "g2s3", "name": "Contas a Receber", "areas": ["fin"], "items": [{"id": "g2s3i0", "t": "Inclusão de Antecipação"}, {"id": "g2s3i1", "t": "Baixa de Títulos com Antecipações"}, {"id": "g2s3i2", "t": "Devolução de Antecipação"}, {"id": "g2s3i3", "t": "Manutenção de Títulos"}, {"id": "g2s3i4", "t": "Relatórios e Consultas de Títulos em Aberto"}, {"id": "g2s3i5", "t": "Baixa Manual de Títulos"}, {"id": "g2s3i6", "t": "Relatórios de Títulos Baixados"}, {"id": "g2s3i7", "t": "Estorno de Baixa"}, {"id": "g2s3i8", "t": "Relatórios de Títulos em Aberto com Antecipações"}, {"id": "g2s3i9", "t": "Baixa de Títulos por Referência - Lotes de Baixa"}, {"id": "g2s3i10", "t": "Estorno de Processamento da Referência"}, {"id": "g2s3i11", "t": "Relatórios de Receitas Apuradas"}, {"id": "g2s3i12", "t": "Manutenção de Títulos Baixados"}, {"id": "g2s3i13", "t": "Geração Automática de Títulos"}, {"id": "g2s3i14", "t": "Desdobramento de Títulos"}, {"id": "g2s3i15", "t": "Estorno do Desdobramento de Títulos"}, {"id": "g2s3i16", "t": "Baixa de Títulos - Perdas"}, {"id": "g2s3i17", "t": "Relatórios de Movimentação por Evento"}, {"id": "g2s3i18", "t": "Alteração de Vencimento"}, {"id": "g2s3i19", "t": "Estorno da Alteração de Vencimento"}, {"id": "g2s3i20", "t": "Alteração de Valor do Título"}, {"id": "g2s3i21", "t": "Estorno da Alteração de Valor do Título"}, {"id": "g2s3i22", "t": "Devolução de Títulos"}, {"id": "g2s3i23", "t": "Estorno da Devolução de títulos"}, {"id": "g2s3i24", "t": "Consultas de Fluxo de Caixa"}, {"id": "g2s3i25", "t": "Consultas e Relatórios de Plano de Contas e Centros de Custo"}, {"id": "g2s3i26", "t": "Remessa - Cobrança Escritural"}, {"id": "g2s3i27", "t": "Estorno do Processamento da Referência de Remessa"}, {"id": "g2s3i28", "t": "Arquivo retorno de remessa"}, {"id": "g2s3i29", "t": "Baixa de Títulos com Cheques de Terceiros"}, {"id": "g2s3i30", "t": "Desconto de Títulos"}, {"id": "g2s3i31", "t": "Estorno do Desconto de Títulos"}, {"id": "g2s3i32", "t": "Devolução do Desconto de Títulos"}, {"id": "g2s3i33", "t": "Relatórios de Títulos Descontados"}, {"id": "g2s3i34", "t": "Lançamentos de Cartão de Crédito"}, {"id": "g2s3i35", "t": "Relatórios de Lançamentos de Cartão de Crédito"}]}, {"id": "g2s4", "name": "Tesouraria", "areas": ["fin"], "items": [{"id": "g2s4i0", "t": "Movimentação de Conta Bancária"}, {"id": "g2s4i1", "t": "Conciliação Bancária"}, {"id": "g2s4i2", "t": "Transferência entre contas bancárias"}, {"id": "g2s4i3", "t": "Extrato da Conta Bancária"}, {"id": "g2s4i4", "t": "Conciliação Bancária Automática (MS Money)"}]}, {"id": "g2s5", "name": "Integração Fiscal", "areas": ["fat", "fin"], "items": [{"id": "g2s5i0", "t": "Parametrização das Naturezas de Operação para Exportação Fiscal"}, {"id": "g2s5i1", "t": "Exportação de Notas Fiscais para Sistema de Escrita Fiscal"}]}, {"id": "g2s6", "name": "Integração Contábil", "areas": ["fin"], "items": [{"id": "g2s6i0", "t": "Importação de Plano de Contas Contábil"}, {"id": "g2s6i1", "t": "Definição de Contas Contábeis nos Cadastros de Clientes/Fornecedores"}, {"id": "g2s6i2", "t": "Definição dos Eventos para Integração Contábil"}, {"id": "g2s6i3", "t": "Ativar Parâmetro para Integração Fiscal e Contábil"}, {"id": "g2s6i4", "t": "Definição de Contas Contábeis nos Parâmetros do Sistema"}, {"id": "g2s6i5", "t": "Definição de Contas Contábeis no Cadastro de Contas Bancárias"}, {"id": "g2s6i6", "t": "Cadastro de Histórico Padrão"}, {"id": "g2s6i7", "t": "Definição de Contas Contábeis no Cadastro de Histórico Padrão"}, {"id": "g2s6i8", "t": "Cadastro de Contabilização Financeira"}, {"id": "g2s6i9", "t": "Testes de Integração com Movimentações de Inclusão e Baixa"}, {"id": "g2s6i10", "t": "Relatórios de Contabilização das Movimentações"}]}]}, {"id": "gspro", "name": "Produção (GSPRO)", "short": "Produção", "color": "f6921e", "deps": ["instalacao"], "sections": [{"id": "g3s0", "name": "Preparação e treinamentos iniciais", "areas": ["pcp"], "items": []}, {"id": "g3s1", "name": "Cadastros e Parametrização do Sistema", "areas": ["pcp"], "items": [{"id": "g3s1i0", "t": "Engenharia - Estrutura de Itens"}, {"id": "g3s1i1", "t": "Cadastro de Grupo de Máquinas"}, {"id": "g3s1i2", "t": "Cadastro de Operação Padrão"}, {"id": "g3s1i3", "t": "Cadastro de Processo de Fabricação do Item"}, {"id": "g3s1i4", "t": "Analisar Looping de Estrutura"}, {"id": "g3s1i5", "t": "Substituição de Componentes da Estrutura"}, {"id": "g3s1i6", "t": "Motivos de Refugo / Reprocesso"}, {"id": "g3s1i7", "t": "Relacionar Motivos de Refugo / Reprocesso ao Item"}, {"id": "g3s1i8", "t": "Configuração de Lotes Automáticos"}, {"id": "g3s1i9", "t": "Cadastro de Centro de Trabalho / Máquinas"}, {"id": "g3s1i10", "t": "Cadastro de Turnos de Produção"}, {"id": "g3s1i11", "t": "Cadastro de Mão de Obra Direta"}, {"id": "g3s1i12", "t": "Cadastro de Operadores de Fábrica"}, {"id": "g3s1i13", "t": "Cadastro de Ferramenta de Produção"}, {"id": "g3s1i14", "t": "Cadastro de Motivos de Paradas"}, {"id": "g3s1i15", "t": "Parâmetros - Chão de Fábrica"}, {"id": "g3s1i16", "t": "Parâmetrização das Requisições para OP (Manual, Automática)"}]}, {"id": "g3s2", "name": "Gestão da Produção", "areas": ["pcp"], "items": [{"id": "g3s2i0", "t": "Abertura de OP manual"}, {"id": "g3s2i1", "t": "Abertura de OP Pelo Pedido de Vendas"}, {"id": "g3s2i2", "t": "Relatórios e Consultas de OPs em Aberto"}, {"id": "g3s2i3", "t": "Requisição de Materiais para OP Manual"}, {"id": "g3s2i4", "t": "Requisição de Materiais para OP Automática"}, {"id": "g3s2i5", "t": "Relatórios de Movimentação de OPs"}, {"id": "g3s2i6", "t": "Fechamento de OP (Parcial e Total)"}, {"id": "g3s2i7", "t": "Consultas de OPs Finalizadas"}, {"id": "g3s2i8", "t": "Requisição de Materiais"}, {"id": "g3s2i9", "t": "Lançamentos de Refugo de Produção"}, {"id": "g3s2i10", "t": "Relatório de Refugo do Item (Valorizado)"}, {"id": "g3s2i11", "t": "Programação de Produção por Pedido"}, {"id": "g3s2i12", "t": "Relatórios de Programação de Produção"}, {"id": "g3s2i13", "t": "Relatório de Necessidades"}, {"id": "g3s2i14", "t": "Estorno de Transações do Estoque"}]}, {"id": "g3s3", "name": "Gestão do Pcp", "areas": ["pcp"], "items": [{"id": "g3s3i0", "t": "Apontamento de Chão de Fábrica"}, {"id": "g3s3i1", "t": "Apontamento de Chão de Fábrica Manual"}, {"id": "g3s3i2", "t": "Relatórios e Consultas de Apontamento Chão de Fábrica / Eficiência"}, {"id": "g3s3i3", "t": "Manutenção de Apontamentos (Turno / Parada)"}, {"id": "g3s3i4", "t": "Análise de Paradas de Produção por Líder"}, {"id": "g3s3i5", "t": "Custo Mensal / Mão de Obra"}, {"id": "g3s3i6", "t": "Custo Mensal / Grupo de Máquinas"}, {"id": "g3s3i7", "t": "Consulta e Relatórios de Simulação de Custo"}, {"id": "g3s3i8", "t": "Ficha de Regulagem de Máquina - Cadastro de Modelos"}, {"id": "g3s3i9", "t": "Ficha de Regulagem de Máquina - Controle das Fichas"}, {"id": "g3s3i10", "t": "Ficha de Regulagem de Máquina - Impressão das Fichas"}, {"id": "g3s3i11", "t": "Manutenção do Status da Ferramenta"}]}]}, {"id": "gsqld", "name": "Qualidade (GSQLD)", "short": "Qualidade", "color": "9fcb3a", "deps": ["instalacao"], "sections": [{"id": "g4s0", "name": "Preparação e treinamentos iniciais", "areas": ["qld"], "items": []}, {"id": "g4s1", "name": "Cadastros e Parametrização", "areas": ["qld"], "items": [{"id": "g4s1i0", "t": "Parâmetros - Gestão da Qualidade"}, {"id": "g4s1i1", "t": "Configuração do Cadastro de Itens para Gestão da Qualidade"}, {"id": "g4s1i2", "t": "Cadastro de Plano de Controle"}, {"id": "g4s1i3", "t": "Emissão do Plano de Controle"}, {"id": "g4s1i4", "t": "Cadastros de Depósito de Controle de Qualidade e Refugo"}, {"id": "g4s1i5", "t": "Cadastro de RNC / RACAP"}, {"id": "g4s1i6", "t": "Cadastro de Modelos de RNC / RACAP"}, {"id": "g4s1i7", "t": "Cadastro de Causas de RNC / RACAP"}, {"id": "g4s1i8", "t": "Cadastro de Tabela de Resultado"}, {"id": "g4s1i9", "t": "Configuração de Skip Lote por Fornecedor"}, {"id": "g4s1i10", "t": "Manutenção do Item no Controle de Qualidade"}]}, {"id": "g4s2", "name": "Gestão do Controle de Qualidade", "areas": ["qld", "lab"], "items": [{"id": "g4s2i0", "t": "RNC - Relatório de Não-Conformidade"}, {"id": "g4s2i1", "t": "RACAP - Registro de Ação Corretiva e Ação Preventiva"}, {"id": "g4s2i2", "t": "Impressão do RNC / RACAP"}, {"id": "g4s2i3", "t": "Consulta do RNC / RACAP"}, {"id": "g4s2i4", "t": "Relatórios de RNC / RACAP"}, {"id": "g4s2i5", "t": "Apontamento do Roteiro de Inspeção"}, {"id": "g4s2i6", "t": "Emissão do Roteiro de Inspeção"}, {"id": "g4s2i7", "t": "Cadastro de Certificado de Qualidade assegurada"}, {"id": "g4s2i8", "t": "Emissão do Certificado de Qualidade Assegurada"}]}]}, {"id": "gsos", "name": "Ordem de Serviço / Manutenção (GSOS)", "short": "Manutenção", "color": "9ddcf8", "deps": ["instalacao"], "sections": [{"id": "g5s0", "name": "Preparação e treinamentos iniciais", "areas": ["man"], "items": []}, {"id": "g5s1", "name": "Cadastros e Parametrização do Sistema", "areas": ["man"], "items": [{"id": "g5s1i0", "t": "Cadastro de Serviços"}, {"id": "g5s1i1", "t": "Cadastro de Kits de Serviço"}, {"id": "g5s1i2", "t": "Cadastro de Tipos de Ordem de Serviço"}, {"id": "g5s1i3", "t": "Cadastro de Técnicos"}, {"id": "g5s1i4", "t": "Cadastro de Veículos"}, {"id": "g5s1i5", "t": "Cadastro de Motoristas"}, {"id": "g5s1i6", "t": "Cadastro de Aplicações"}, {"id": "g5s1i7", "t": "Cadastro de Tipos de Aplicação"}, {"id": "g5s1i8", "t": "Cadastro de Itens"}, {"id": "g5s1i9", "t": "Cadastro de Clientes"}]}, {"id": "g5s2", "name": "Gestão de Ordem de Serviço", "areas": ["man"], "items": [{"id": "g5s2i0", "t": "Ordem de Serviço"}, {"id": "g5s2i1", "t": "Geração de Ordem de Serviço Automática (Pedido de Vendas)"}, {"id": "g5s2i2", "t": "Emissão da Ordem de Serviço"}, {"id": "g5s2i3", "t": "Requisição de Materiais para Ordem de Serviço"}, {"id": "g5s2i4", "t": "Apontamento de Serviços"}, {"id": "g5s2i5", "t": "Sequenciamento de Tarefas"}, {"id": "g5s2i6", "t": "Estorno de Transações do Estoque"}, {"id": "g5s2i7", "t": "Impressão do Fechamento de Ordem de Serviço"}, {"id": "g5s2i8", "t": "Consultas de Apontamento de Serviços"}, {"id": "g5s2i9", "t": "Geração de Nota Fiscal por Ordem de Serviço"}, {"id": "g5s2i10", "t": "Relatórios e Consultas de Ordem de Serviço"}, {"id": "g5s2i11", "t": "Apontamento de Quilometragem/Abastecimento de Veículos"}, {"id": "g5s2i12", "t": "Relatório de Quilometragem/Abastecimento de Veículos"}]}]}, {"id": "gspdv", "name": "Frente de Caixa (GSPDV)", "short": "Frente de Caixa", "color": "ffdd00", "deps": ["instalacao"], "sections": [{"id": "g6s0", "name": "Preparação e treinamentos iniciais", "areas": [], "items": []}, {"id": "g6s1", "name": "Cadastros e Parametrização do Sistema", "areas": [], "items": [{"id": "g6s1i0", "t": "Cadastro de Clientes e Fornecedores"}, {"id": "g6s1i1", "t": "Cadastro de Condições de Pagamento"}, {"id": "g6s1i2", "t": "Cadastro de Formas de Pagamento"}, {"id": "g6s1i3", "t": "Cadastro de Bancos / Agências"}, {"id": "g6s1i4", "t": "Cadastro de Cartões de Crédito"}, {"id": "g6s1i5", "t": "Cadastro de Operadoras / Planos"}, {"id": "g6s1i6", "t": "Cadastro de Caixas / Máquinas PDV"}, {"id": "g6s1i7", "t": "Cadastro de Turnos"}, {"id": "g6s1i8", "t": "Cadastro de Convênios e Conveniados"}, {"id": "g6s1i9", "t": "Cadastro de Séries e Espécies de Documento"}, {"id": "g6s1i10", "t": "Cadastro de Naturezas de Operação"}]}, {"id": "g6s2", "name": "Gestão de Frente de Caixa", "areas": [], "items": [{"id": "g6s2i0", "t": "Abertura e Fechamento do Caixa"}, {"id": "g6s2i1", "t": "Sangria do Caixa"}, {"id": "g6s2i2", "t": "Suprimento de Caixa"}, {"id": "g6s2i3", "t": "Venda de Produtos (PDV)"}, {"id": "g6s2i4", "t": "Impressão de Carnê"}, {"id": "g6s2i5", "t": "Devolução de Venda"}, {"id": "g6s2i6", "t": "Geração de Nota Fiscal por Venda (Cupom Fiscal)"}, {"id": "g6s2i7", "t": "Consulta Preços/Estoque de Produtos (PDV)"}, {"id": "g6s2i8", "t": "Altera Preço de Venda do Próximo Item"}, {"id": "g6s2i9", "t": "Geração de Cupom Fiscal Através do Pedido de Vendas"}, {"id": "g6s2i10", "t": "Recebimento de Título (Carnê)"}, {"id": "g6s2i11", "t": "Cancelamento de Item da Venda"}, {"id": "g6s2i12", "t": "Cancelamento do Cupom Fiscal"}, {"id": "g6s2i13", "t": "Leitura X"}, {"id": "g6s2i14", "t": "leitura da Memória Fiscal"}, {"id": "g6s2i15", "t": "Redução Z"}, {"id": "g6s2i16", "t": "Fechamento Financeiro do Caixa"}, {"id": "g6s2i17", "t": "Estorno fechamento financeiro do caixa"}, {"id": "g6s2i18", "t": "Fechamento Comissão Convênio"}, {"id": "g6s2i19", "t": "Fechamento de Comissão Contas a Pagar"}, {"id": "g6s2i20", "t": "Consulta de Monitorameto do Caixa"}, {"id": "g6s2i21", "t": "Relatório de Fechamento Financeiro Diário"}, {"id": "g6s2i22", "t": "Relatório de Fechamento de Caixa"}, {"id": "g6s2i23", "t": "Relatórios de Convênio"}, {"id": "g6s2i24", "t": "Exportação de Dados para Nota Fisca Paulista (REDF)"}, {"id": "g6s2i25", "t": "Relatórios e Consultas Gerenciais"}]}]}]};
+const BASE = DATA.gestoes;
+const MIN_PER_ITEM = 20; // premissa: 20 minutos de treinamento por atividade
+const DEFAULT_OFF = ["gspdv"];
+const DOMAIN = "fundicaosaofrancisco.com.br";
+const COLORS = ["5dafe1","fcb415","67c3a8","f6921e","9fcb3a","9ddcf8","ffdd00"];
+const TIPOS = ["Treinamento","Parametrização","Acompanhamento","Suporte","Reunião","Visita técnica","Homologação"];
+const MODS = ["Remoto","Presencial"];
+const DESPESAS = ["Translado","Almoço","Jantar","Hospedagem","Combustível","Pedágio / Estacionamento","Outros"];
+const VEIC_REMOTO = {cod:"AAA-0003",desc:"ATENDIMENTO REMOTO",transp:"NW SOFTWARE"};
+const AREAS = [
+  {k:"geral",grp:"Geral",label:"Geral",short:"Lucas",people:["Lucas"],mail:["ldanelon"]},
+  {k:"fin",grp:"Administrativo",label:"Financeiro",short:"Simone",people:["Simone"],mail:["financeiro"]},
+  {k:"comp",grp:"Administrativo",label:"Compras",short:"Fernando",people:["Fernando"],mail:["compras"]},
+  {k:"fat",grp:"Administrativo",label:"Faturamento / Fiscal",short:"Micker",people:["Micker (responsável)","Rafael"],mail:["mlima"]},
+  {k:"vend",grp:"Administrativo",label:"Vendas",short:"Rafael",people:["Rafael"],mail:["rafael"]},
+  {k:"qld",grp:"Produção",label:"Qualidade (QLD)",short:"Luis Fernando",people:["Luis Fernando"],mail:["luisfernando"]},
+  {k:"lab",grp:"Produção",label:"Laboratório",short:"Wilson",people:["Wilson"],mail:["fusao"]},
+  {k:"pcp",grp:"Produção",label:"Fábrica / PCP / Expedição",short:"Rodrigo",people:["Rodrigo"],mail:["rodrigoreis"]},
+  {k:"man",grp:"Produção",label:"Manutenção",short:"Juninho",people:["Juninho"],mail:["manutencao"]}
+];
+const GRP_TITLE = {"Geral":"Geral","Administrativo":"Administrativo · responsável: Simone","Produção":"Produção · responsável: Rafael","Outros":"Outros"};
+const AREA0 = Object.fromEntries(AREAS.map(a=>[a.k,a]));
+const GROUPS = ["Geral","Administrativo","Produção","Outros"];
+let AL = [], AREA = {}, REG = {};
+const LBL = {todo:"Não iniciada",doing:"Em andamento",done:"Concluída",blocked:"Bloqueada"};
+const ELBL = {agendado:"Agendado",realizado:"Realizado",registrar:"Ficha pendente",cancelado:"Cancelado"};
+const TABS = [["visao-geral","Visão geral"],["cronograma","Cronograma"],["agenda","Agenda"],["fichas","Fichas de atendimento"],["equipe","Key users"],["arquivos","Arquivos complementares"]];
+const SEC_TAB = {"s-resumo":"visao-geral","s-charts":"visao-geral","s-ev":"visao-geral","s-plan":"cronograma","s-cal":"agenda","s-fichas":"fichas","s-users":"equipe","s-arquivos":"arquivos"};
+const COLS = ["progress","fichas","agenda","plan_g","plan_s","plan_i","notas","equipe","arquivos","arquivos_equipe"];
+
+const ST = {arquivos:{},arquivos_equipe:{},progress:{},fichas:{},agenda:{},plan_g:{},plan_s:{},plan_i:{},notas:{},equipe:{},cfg:{}};
+let filter = "all", editing = false, tab = "visao-geral";
+const open = new Set();
+let openInit = false;
+let db = null, user = null, uid = null, isAdmin = true, myName = "", names = {};
+let link = "connecting";
+const pending = new Set();
+let canWrite = true; const openC = new Set(); const drafts = {};
+let MD = null;       // modal aberto
+let M = null;        // cálculo atual
+const today0 = new Date();
+let cal = {y:today0.getFullYear(), m:today0.getMonth(), day:null, view:"mes"};
+
+const $ = (s)=>document.querySelector(s);
+const esc = (s)=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = (n)=>String(n).padStart(2,"0");
+const ds = (d)=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const toDate = (d,t)=>{ const a=String(d).split("-").map(Number), b=String(t||"00:00").split(":").map(Number); return new Date(a[0],a[1]-1,a[2],b[0]||0,b[1]||0); };
+const fmtD = (d)=>{ const a=String(d).split("-"); return a[2]+"/"+a[1]+"/"+a[0]; };
+const fmt = (iso)=>{ try{ return new Date(iso).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } };
+const mins = (a,b)=>{ if(!a||!b) return 0; const x=a.split(":").map(Number), y=b.split(":").map(Number); return Math.max(0,(y[0]*60+y[1])-(x[0]*60+x[1])); };
+const hm = (m)=>{ const h=Math.floor(m/60), r=m%60; return h?(h+"h"+(r?pad(r):"")):(r+" min"); };
+const tsOf=(d,t)=>(d&&t)?new Date(d+"T"+t).getTime():NaN;
+const lineMin=(h)=>{ const a=tsOf(h.di,h.hi), b=tsOf(h.df||h.di,h.hf); return (isNaN(a)||isNaN(b))?0:Math.max(0,Math.round((b-a)/60000)); };
+const fichaH=(f)=>(f.horarios&&f.horarios.length)?f.horarios:[{di:f.date,hi:f.start,df:f.date,hf:f.end}];
+const fichaMin=(f)=>fichaH(f).reduce((a,h)=>a+lineMin(h),0);
+const fichaDesp=(f)=>(f.despesas||[]);
+const despTotal=(f)=>fichaDesp(f).reduce((a,d)=>a+(Number(d.val)||0),0);
+const brl=(v)=>(Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const dec=(m)=>(m/60).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const up = (s)=>s.charAt(0).toUpperCase()+s.slice(1);
+const pc = (x)=>Math.round(x*100)+"%";
+const newId = ()=>"x"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const nameOf = (id)=> id ? ((names[id] && names[id].name) || "Alguém") : "Alguém";
+const pg = (id)=>ST.progress[id]||{};
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("on"),3600); }
+
+/* ---------- plano efetivo (base + personalização) ---------- */
+function offSet(){ return new Set(Array.isArray(ST.cfg.off)?ST.cfg.off:DEFAULT_OFF); }
+function plan(){
+  const cfg=ST.cfg, hid=new Set(cfg.hidden||[]), hs=new Set(cfg.hiddenSec||[]), rn=cfg.rename||{}, ar=cfg.areas||{};
+  const arr=(o)=>Object.entries(o).map(([id,v])=>Object.assign({id},v)).sort((a,b)=>(a.ord||0)-(b.ord||0)||a.id.localeCompare(b.id));
+  const gs=BASE.map(g=>({id:g.id,name:rn[g.id]||g.name,short:rn[g.id]||g.short,color:g.color,deps:g.deps,custom:false,
+    sections:g.sections.filter(s=>!hs.has(s.id)).map(s=>({id:s.id,name:rn[s.id]||s.name,areas:ar[s.id]||s.areas,custom:false,
+      items:s.items.filter(i=>!hid.has(i.id)).map(i=>({id:i.id,t:rn[i.id]||i.t,custom:false}))}))}));
+  arr(ST.plan_g).forEach((g,i)=>gs.push({id:g.id,name:rn[g.id]||g.name,short:rn[g.id]||g.name,color:g.color||COLORS[(i+3)%COLORS.length],deps:["instalacao"],custom:true,sections:[]}));
+  const gm=Object.fromEntries(gs.map(g=>[g.id,g]));
+  arr(ST.plan_s).forEach(s=>{ const g=gm[s.g]; if(g) g.sections.push({id:s.id,name:rn[s.id]||s.name,areas:ar[s.id]||s.areas||[],custom:true,items:[]}); });
+  arr(ST.plan_i).forEach(it=>{ const g=gm[it.g]; if(!g) return; const s=g.sections.find(x=>x.id===it.s); if(s) s.items.push({id:it.id,t:rn[it.id]||it.t,custom:true}); });
+  const order=cfg.gorder||[];
+  gs.sort((a,b)=>{ const x=order.indexOf(a.id), y=order.indexOf(b.id); return (x<0?999:x)-(y<0?999:y); });
+  return gs;
+}
+
+/* ---------- key users efetivos (base + edições) ---------- */
+const plainName=(n)=>String(n||"").replace(/\s*\(.*?\)\s*/g," ").trim();
+function effAreas(){
+  const ov=ST.equipe, list=[];
+  for(const a of AREAS){ const o=ov[a.k]; if(o&&o.del) continue;
+    list.push({k:a.k,grp:(o&&o.grp)||a.grp,label:(o&&o.label)||a.label,custom:false,
+      raw:(o&&Array.isArray(o.contacts))?o.contacts:(!SEED?[]:a.people.map((n,i)=>({name:n,email:a.mail[i]?a.mail[i]+"@"+DOMAIN:"",phone:""})))}); }
+  Object.entries(ov).filter(([id,o])=>!AREA0[id]&&!o.del).map(([id,o])=>Object.assign({id},o)).sort((a,b)=>(a.ord||0)-(b.ord||0)||a.id.localeCompare(b.id))
+    .forEach(o=>list.push({k:o.id,grp:o.grp||"Outros",label:o.label||"Nova área",custom:true,raw:Array.isArray(o.contacts)?o.contacts:[]}));
+  const reg={};
+  list.forEach(a=>{ a.raw=a.raw.map((c,i)=>c.link?c:Object.assign({},c,{cid:c.cid||a.k+"-"+i})); a.raw.forEach(c=>{ if(!c.link) reg[c.cid]=Object.assign({},c,{home:a.label,homeK:a.k,areas:[]}); }); });
+  list.forEach(a=>{
+    a.contacts=a.raw.map(c=>c.link?(reg[c.link]?Object.assign({},reg[c.link],{linked:true}):null):Object.assign({},c,{home:a.label,homeK:a.k})).filter(Boolean);
+    a.contacts.forEach(c=>{ if(reg[c.cid]) reg[c.cid].areas.push(a.k); });
+    a.short=(a.contacts[0]&&plainName(a.contacts[0].name))||a.label; });
+  list.sort((a,b)=>GROUPS.indexOf(a.grp)-GROUPS.indexOf(b.grp));
+  REG=reg;
+  return list;
+}
+const peopleList=()=>[...new Set(AL.flatMap(a=>a.contacts.map(c=>plainName(c.name))).filter(Boolean))];
+
+/* ---------- cálculo ---------- */
+function statusOf(d,g,t){ return t && d===t ? "done" : (d+g>0 ? "doing" : "todo"); }
+function compute(){
+  const off=offSet(), P=plan(), secMap={};
+  const R = {gs:[],by:{},tot:0,done:0,doing:0,mods:0,modsDone:0};
+  for(const g of P){
+    const G = {g,on:!off.has(g.id),secs:[],total:0,done:0,doing:0}; secMap[g.id]={g:g.name,sec:g.name};
+    for(const s of g.sections){
+      const X = {s,total:s.items.length,done:0,doing:0}; secMap[s.id]={g:g.name,sec:s.name};
+      for(const it of s.items){ const st=pg(it.id).s; if(st==="done")X.done++; else if(st==="doing")X.doing++; secMap[it.id]={g:g.name,sec:s.name+" › "+it.t}; }
+      X.pct = X.total ? X.done/X.total : 0; X.status = statusOf(X.done,X.doing,X.total);
+      G.secs.push(X); G.total+=X.total; G.done+=X.done; G.doing+=X.doing;
+    }
+    G.pct = G.total ? G.done/G.total : 0; G.status = statusOf(G.done,G.doing,G.total);
+    R.gs.push(G); R.by[g.id]=G;
+    if(G.on){ R.tot+=G.total; R.done+=G.done; R.doing+=G.doing; R.mods++; if(G.status==="done") R.modsDone++; }
+  }
+  for(const G of R.gs){
+    G.depsUnmet = G.on && G.g.deps.some(d=>{ const D=R.by[d]; return D && D.on && D.status!=="done"; });
+    G.unlocked = (ST.cfg.unlocked||[]).includes(G.g.id);
+    G.blocked = G.depsUnmet && !G.unlocked;
+    G.shown = (G.blocked && G.status==="todo") ? "blocked" : G.status;
+  }
+  R.pct = R.tot ? R.done/R.tot : 0;
+  R.todo = R.tot-R.done-R.doing;
+  R.rec = null;
+  outer: for(const G of R.gs){
+    if(!G.on || G.blocked || G.status==="done") continue;
+    for(const X of G.secs){ if(X.status!=="done"){
+      const it = X.s.items.find(i=>pg(i.id).s!=="done");
+      R.rec = {G,X,it}; break outer; } }
+  }
+  const ev = [];
+  for(const G of R.gs){ if(!G.on) continue; for(const X of G.secs) for(const it of X.s.items){
+    const p=pg(it.id); if(p.at) ev.push({kind:"prog",t:it.t,s:p.s,by:p.by,at:p.at,g:G.g.name,sec:X.s.name}); } }
+  Object.entries(ST.fichas).forEach(([id,f])=>{ if(f.at) ev.push({kind:"ficha",id,no:f.no,tipo:f.tipo,by:f.by,at:f.at,date:f.date}); });
+  Object.entries(ST.notas).forEach(([id,n])=>{ if(n.at&&secMap[n.s]) ev.push({kind:"nota",text:n.text,by:n.by,at:n.at,g:secMap[n.s].g,sec:secMap[n.s].sec}); });
+  ev.sort((a,b)=>b.at.localeCompare(a.at));
+  R.ev = ev;
+  // agenda
+  const now=new Date();
+  R.agenda = Object.entries(ST.agenda).map(([id,e])=>Object.assign({id,state:evState(e,now)},e)).sort((a,b)=>(a.date+(a.start||"")).localeCompare(b.date+(b.start||"")));
+  R.pendFicha = R.agenda.filter(e=>e.state==="registrar").length;
+  R.next = R.agenda.find(e=>e.state==="agendado") || null;
+  R.fichas = Object.entries(ST.fichas).map(([id,f])=>Object.assign({id},f)).sort((a,b)=>(b.date+(b.start||"")).localeCompare(a.date+(a.start||"")));
+  R.fichaMins = R.fichas.reduce((a,f)=>a+fichaMin(f),0);
+  return R;
+}
+function evState(e,now){
+  if(e.status==="cancelado") return "cancelado";
+  if(e.fichaId || e.status==="realizado") return "realizado";
+  return toDate(e.date,e.end||e.start||"23:59") < now ? "registrar" : "agendado";
+}
+function gName(gid){ const G=M.by[gid]; return G?G.g.name:""; }
+function sName(gid,sid){ const G=M.by[gid]; if(!G) return ""; const X=G.secs.find(x=>x.s.id===sid); return X?X.s.name:""; }
+function gsLabel(gid,sid){ const a=gName(gid); if(!a) return "Geral"; const b=sName(gid,sid); return b?a+" › "+b:a; }
+
+/* ---------- gráficos ---------- */
+function ringSvg(p,size,sw,c1){
+  const r=(size-sw)/2, C=2*Math.PI*r;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--todo)" stroke-width="${sw}"/>
+    ${p>0?`<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${c1}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${C*p} ${C}" transform="rotate(-90 ${size/2} ${size/2})"/>`:""}</svg>`;
+}
+function donutSvg(parts,size,sw){
+  const r=(size-sw)/2, C=2*Math.PI*r, tot=parts.reduce((a,b)=>a+b.v,0);
+  let o=0, out=`<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--todo)" stroke-width="${sw}"/>`;
+  const nz = parts.filter(p=>p.v>0).length;
+  if(tot>0) for(const p of parts){ if(!p.v) continue;
+    const len=C*p.v/tot, gap=nz>1?2:0;
+    out+=`<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${p.c}" stroke-width="${sw}" stroke-dasharray="${Math.max(len-gap,0.5)} ${C}" stroke-dashoffset="${-o}" transform="rotate(-90 ${size/2} ${size/2})"><title>${esc(p.n)}: ${p.v}</title></circle>`;
+    o+=len; }
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="Distribuição das atividades">${out}</svg>`;
+}
+function evolution(){
+  const done=[]; for(const G of M.gs){ if(!G.on) continue; for(const X of G.secs) for(const it of X.s.items){ const p=pg(it.id); if(p.s==="done"&&p.at) done.push(p.at); } }
+  if(!done.length||!M.tot) return `<div class="empty">A curva aparece aqui quando a primeira atividade for concluída.</div>`;
+  const day=(iso)=>{ const d=new Date(iso); return new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(); };
+  const counts=new Map(); done.forEach(a=>{ const k=day(a); counts.set(k,(counts.get(k)||0)+1); });
+  const days=[...counts.keys()].sort((a,b)=>a-b);
+  const D=86400000, td=day(new Date().toISOString());
+  const x0=days[0]-D, x1=Math.max(td,days[days.length-1]);
+  let cum=0; const pts=[[x0,0]];
+  days.forEach(k=>{ cum+=counts.get(k); pts.push([k,cum/M.tot]); });
+  if(x1>days[days.length-1]) pts.push([x1,cum/M.tot]);
+  const ymax=Math.min(1,Math.max(0.1,Math.ceil(cum/M.tot*12)/10));
+  const W=520,H=210,l=40,r=18,t=14,b=30, span=Math.max(x1-x0,D);
+  const X=v=>l+(v-x0)/span*(W-l-r), Y=v=>t+(1-v/ymax)*(H-t-b);
+  const line=pts.map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)).join(" ");
+  const area=line+` L${X(pts[pts.length-1][0]).toFixed(1)} ${Y(0)} L${X(x0)} ${Y(0)} Z`;
+  const ticks=[0,ymax/2,ymax].map(v=>`<line x1="${l}" x2="${W-r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${l-6}" y="${Y(v)+4}" text-anchor="end">${pc(v)}</text>`).join("");
+  const lp=pts[pts.length-1];
+  const dl=(ms)=>new Date(ms).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
+  const hov=pts.slice(1).map(p=>`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="9" fill="transparent"><title>${dl(p[0])}: ${pc(p[1])}</title></circle>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Evolução do percentual concluído ao longo do tempo, atualmente ${pc(M.pct)}">
+    ${ticks}<path d="${area}" fill="var(--accent-fill)" opacity=".22"/>
+    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="${X(lp[0])}" cy="${Y(lp[1])}" r="4.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>
+    <text x="${X(lp[0])-8}" y="${Y(lp[1])-10}" text-anchor="end" style="fill:var(--ink);font-weight:600;font-size:12px">${pc(lp[1])}</text>
+    <text x="${l}" y="${H-8}">${dl(days[0])}</text><text x="${W-r}" y="${H-8}" text-anchor="end">${dl(x1)}</text>${hov}</svg>`;
+}
+
+/* ---------- visão geral ---------- */
+function rResumo(){
+  const left=M.tot-M.done, hrs=left*MIN_PER_ITEM/60;
+  const eta = left===0 ? "Concluído" : "≈ "+(hrs<10?hrs.toFixed(1).replace(".",","):Math.round(hrs))+" h";
+  const last=M.ev.find(e=>e.kind==="prog");
+  const lastTxt = last ? `<div class="v" style="font-size:16px">${esc(last.t)}</div><div class="s">${esc(nameOf(last.by))} · ${fmt(last.at)}</div>` : `<div class="v" style="font-size:16px">Nenhuma ainda</div><div class="s">O registro começa na primeira atividade.</div>`;
+  const rec = M.rec ? `<div class="next"><div class="t">${esc(M.rec.G.g.name)} › ${esc(M.rec.X.s.name)}</div><div class="s">${M.rec.it?"Próxima atividade: "+esc(M.rec.it.t):""}</div><button class="link" data-act="goto" data-g="${esc(M.rec.G.g.id)}" data-s="${esc(M.rec.X.s.id)}">Ir para a etapa</button></div>` : `<div class="v" style="font-size:16px">Tudo concluído</div>`;
+  const nx = M.next ? `<div class="v" style="font-size:16px">${fmtD(M.next.date)} ${esc(M.next.start||"")}</div><div class="s">${esc(M.next.title)}</div>` : `<div class="v" style="font-size:16px">Nenhum</div><div class="s">Crie na aba Agenda.</div>`;
+  const bar=`<div class="bar" role="img" aria-label="${M.done} concluídas, ${M.doing} em andamento, ${M.todo} não iniciadas"><b class="d" style="width:${M.tot?M.done/M.tot*100:0}%"></b><b class="g" style="width:${M.tot?M.doing/M.tot*100:0}%"></b></div>`;
+  $("#s-resumo").innerHTML = `<div class="hero">
+    <div class="card pct-card"><div class="ring">${ringSvg(M.pct,176,14,"var(--done)")}<div class="c"><div class="big num">${pc(M.pct)}</div><div class="lab">da implantação</div></div></div>${bar}
+      <div class="hint num">${M.done} de ${M.tot} atividades concluídas</div></div>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Módulos</div><div class="v num">${M.mods}</div><div class="s">no escopo</div></div>
+      <div class="kpi"><div class="k">Concluídos</div><div class="v num">${M.modsDone}</div><div class="s">módulos</div></div>
+      <div class="kpi"><div class="k">Pendentes</div><div class="v num">${M.mods-M.modsDone}</div><div class="s">módulos</div></div>
+      <div class="kpi"><div class="k">Tempo restante</div><div class="v num">${eta}</div><div class="s">${MIN_PER_ITEM} min por atividade</div></div>
+      <div class="kpi"><div class="k">Atendimentos</div><div class="v num">${M.fichas.length}</div><div class="s">${hm(M.fichaMins)} registradas</div></div>
+      <div class="kpi"><div class="k">Fichas pendentes</div><div class="v num">${M.pendFicha}</div><div class="s">agendas já realizadas</div></div>
+      <div class="kpi wide"><div class="k">Próximo agendamento</div>${nx}</div>
+      <div class="kpi wide"><div class="k">Última atividade</div>${lastTxt}</div>
+      <div class="kpi wide"><div class="k">Próxima etapa recomendada</div>${rec}</div>
+    </div></div>`;
+}
+function rCharts(){
+  const gs=M.gs.filter(G=>G.on);
+  const bars=gs.map(G=>`<div class="hb"><div class="n">${esc(G.g.short)}</div><div class="t" title="${G.done} de ${G.total}"><i style="width:${G.pct*100}%"></i></div><div class="p num">${pc(G.pct)}</div></div>`).join("");
+  const parts=[{n:"Concluídas",v:M.done,c:"var(--done)"},{n:"Em andamento",v:M.doing,c:"var(--doing)"},{n:"Não iniciadas",v:M.todo,c:"var(--todo)"}];
+  const lg=parts.map(p=>`<div><span class="sw" style="background:${p.c}"></span>${p.n}: <b class="num">${p.v}</b></div>`).join("");
+  $("#s-charts").innerHTML = `<h2>Indicadores</h2><div class="charts">
+    <div class="card"><h3>Evolução da implantação</h3>${evolution()}</div>
+    <div class="card"><h3>Percentual por gestão</h3><div class="hbars">${bars}</div></div>
+    <div class="card"><h3>Atividades concluídas e pendentes</h3><div class="donut">${donutSvg(parts,130,18)}<div class="legend">${lg}</div></div></div></div>`;
+}
+function rEv(){
+  const li=M.ev.slice(0,8).map(e=>{
+    if(e.kind==="ficha") return `<li><span class="dot ficha"></span><div class="x"><b>${esc(nameOf(e.by))}</b> lançou a ficha ${fichaNo(e.no)} (${esc(e.tipo||"Atendimento")})<div class="y">Atendimento de ${fmtD(e.date)}</div></div><span class="w num">${fmt(e.at)}</span></li>`;
+    if(e.kind==="nota") return `<li><span class="dot ficha"></span><div class="x"><b>${esc(nameOf(e.by))}</b> comentou em ${esc(e.sec)}<div class="y">${esc(e.text.length>120?e.text.slice(0,120)+"…":e.text)}</div></div><span class="w num">${fmt(e.at)}</span></li>`;
+    return `<li><span class="dot ${e.s}"></span><div class="x"><b>${esc(nameOf(e.by))}</b> ${e.s==="done"?"concluiu":"iniciou"} ${esc(e.t)}<div class="y">${esc(e.g)} › ${esc(e.sec)}</div></div><span class="w num">${fmt(e.at)}</span></li>`; }).join("");
+  $("#s-ev").innerHTML = `<h2>Atividade recente</h2><div class="card">${li?`<ul class="ev">${li}</ul>`:`<div class="empty">Atividades iniciadas ou concluídas e fichas lançadas aparecem aqui, com quem registrou e quando.</div>`}</div>`;
+}
+
+/* ---------- key users ---------- */
+function areaProg(k){
+  let t=0,d=0;
+  for(const G of M.gs){ if(!G.on) continue; for(const X of G.secs) if(X.s.areas.includes(k)){ t+=X.total; d+=X.done; } }
+  return {t,d,p:t?d/t:0};
+}
+function rUsers(){
+  let rows="", cur="";
+  const cp=(v)=>`<span class="mail"><code>${esc(v)}</code><button class="cp" data-act="copy" data-v="${esc(v)}" aria-label="Copiar ${esc(v)}">Copiar</button></span>`;
+  const cols=isAdmin?5:5;
+  for(const a of AL){
+    if(a.grp!==cur){ cur=a.grp; rows+=`<tr class="grp"><td colspan="${cols}">${esc(GRP_TITLE[cur]||cur)}</td></tr>`; }
+    const p=areaProg(a.k), cs=a.contacts;
+    const names=cs.length?cs.map(c=>`<span>${esc(c.name)||"—"}${isAdmin?` <button class="link nb" data-act="u-edit" data-c="${esc(c.cid)}">editar</button>`:""}</span>`).join("<br>"):"—";
+    const mails=cs.length?cs.map(c=>c.email?cp(c.email):"—").join("<br>"):"—";
+    const phones=cs.length?cs.map(c=>c.phone?cp(c.phone):"—").join("<br>"):"—";
+    const an=isAdmin?`<button class="link" style="color:inherit;text-decoration:none;font-weight:600" data-act="u-area" data-k="${esc(a.k)}" title="Renomear ou remover a área">${esc(a.label)}</button>`:esc(a.label);
+    rows+=`<tr><td>${an}</td><td>${names}</td><td>${mails}</td><td>${phones}</td><td>${p.t?`<div class="mini"><div class="t"><i style="width:${p.p*100}%"></i></div><span class="num">${pc(p.p)}</span></div>`:'<span class="hint">sem etapas</span>'}</td></tr>`;
+  }
+  const delCount=Object.values(ST.equipe).filter(o=>o.del).length;
+  $("#s-users").innerHTML=`<div class="bar-tools"><h2 style="margin:0">Key users</h2>${isAdmin?`<span class="row-gap">${delCount?`<button class="btn" data-act="u-restore">Restaurar áreas removidas (${delCount})</button>`:""}<button class="btn pri" data-act="u-edit" data-c="">+ Adicionar usuário</button></span>`:""}</div><div class="card tbl" style="padding:6px 8px"><table style="min-width:820px"><thead><tr><th>Área</th><th>Usuário</th><th>E-mail</th><th>Telefone</th><th>Progresso das etapas</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function openPersonForm(cid){
+  const p=cid?REG[cid]:null; const sel=new Set(p?p.areas:[]);
+  const groups=GROUPS.map(g=>{ const as=AL.filter(a=>a.grp===g); return as.length?`<div><div class="sub-h" style="margin:6px 0 4px">${esc(g)}</div><div class="chk">${as.map(a=>`<label><input type="checkbox" name="areas" value="${esc(a.k)}" ${sel.has(a.k)?"checked":""}> ${esc(a.label)}</label>`).join("")}</div></div>`:""; }).join("");
+  const body=F.txt("name","Nome",p?p.name:"","required")+`<div class="fr">${F.txt("email","E-mail",p?p.email:"")}${F.txt("phone","Telefone",p?p.phone:"","placeholder=\"(11) 90000-0000\"")}</div>
+    <div class="f"><span class="lb">Áreas em que atua</span><div class="row-gap"><button type="button" class="btn sm" data-act="u-all">Marcar todas</button><button type="button" class="btn sm" data-act="u-none">Limpar</button></div>${groups}</div>`+F.txt("newarea","Outra área (opcional)","","placeholder=\"Ex.: Expedição\"");
+  openModal(p?"Editar usuário":"Adicionar usuário",body,{submit:"Salvar",
+    left:p?`<button type="button" class="btn danger" data-act="u-del" data-c="${esc(cid)}">Remover usuário</button>`:"",
+    onSubmit:async(fd)=>{
+      const name=(fd.get("name")||"").trim(); if(!name){ toast("Informe o nome."); return; }
+      const na=(fd.get("newarea")||"").trim(); const keys=fd.getAll("areas");
+      if(!keys.length && !na){ toast("Marque ao menos uma área."); return; }
+      if(await guard(()=>savePerson(cid,{name,email:(fd.get("email")||"").trim(),phone:(fd.get("phone")||"").trim()},keys,na))){ closeModal(); toast("Usuário salvo"); }
+    }});
+}
+async function writeRaw(a,raw){ if(JSON.stringify(raw)===JSON.stringify(a.raw)) return; await put("equipe",a.k,Object.assign({},ST.equipe[a.k]||{},{contacts:raw},ST.equipe[a.k]?{}:{del:false})); }
+async function savePerson(cid,f,keys,newArea){
+  const cur=cid?REG[cid]:null; const id=cid||newId();
+  const existing=keys.slice(); let newKey=null;
+  if(newArea){ newKey=newId(); }
+  const all=existing.concat(newKey?[newKey]:[]);
+  const home=(cur&&all.includes(cur.homeK))?cur.homeK:all[0];
+  const owned={cid:id,name:f.name,email:f.email,phone:f.phone};
+  for(const a of AL){
+    const raw=a.raw.slice(); const idx=raw.findIndex(c=>c.cid===id||c.link===id);
+    const want=all.includes(a.k)?(a.k===home?owned:{link:id}):null;
+    if(idx>=0){ if(want) raw[idx]=want; else raw.splice(idx,1); } else if(want) raw.push(want);
+    await writeRaw(a,raw);
+  }
+  if(newKey) await put("equipe",newKey,{label:newArea,grp:"Outros",contacts:[newKey===home?owned:{link:id}],ord:nextOrd("equipe"),del:false});
+}
+async function removePerson(cid){ for(const a of AL){ const raw=a.raw.filter(c=>!(c.cid===cid||c.link===cid)); await writeRaw(a,raw); } }
+function openAreaEdit(k){
+  const a=AREA[k]; if(!a) return;
+  openModal("Área: "+a.label,F.txt("label","Nome da área",a.label,"required")+F.sel("grp","Grupo",GROUPS,a.grp),{submit:"Salvar",
+    left:`<button type="button" class="btn danger" data-act="u-delarea" data-k="${esc(k)}">Remover área</button>`,
+    onSubmit:async(fd)=>{ const label=(fd.get("label")||"").trim(); if(!label){ toast("Informe o nome."); return; }
+      if(await guard(()=>put("equipe",k,Object.assign({},ST.equipe[k]||{},{label,grp:fd.get("grp"),contacts:a.raw,del:false})))){ closeModal(); toast("Área salva"); } }});
+}
+async function removeArea(k){
+  const a=AREA[k];
+  for(const c of a.raw.filter(x=>!x.link)){   // quem existe em outras áreas passa a ser cadastrado lá
+    const other=AL.find(x=>x.k!==k&&x.raw.some(r=>r.link===c.cid));
+    if(other) await writeRaw(other,other.raw.map(r=>r.link===c.cid?c:r));
+  }
+  if(a.custom) await del("equipe",k); else await put("equipe",k,Object.assign({},ST.equipe[k]||{},{del:true,contacts:[]}));
+}
+/* ---------- cronograma ---------- */
+const checkIcon=()=>`<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 7.5l2.8 2.8L11 4.6" fill="none" stroke="#14324e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const dotIcon=()=>`<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="var(--doing)"/></svg>`;
+const noteList=(sid)=>Object.entries(ST.notas).filter(([,n])=>n.s===sid).map(([id,n])=>Object.assign({id},n)).sort((a,b)=>(a.at||"").localeCompare(b.at||""));
+const noteCount=(sid)=>noteList(sid).length;
+function notePanel(sid){
+  if(!openC.has(sid)) return "";
+  const li=noteList(sid).map(n=>`<div class="ni"><div class="nh"><b>${esc(nameOf(n.by))}</b><span class="hint">${fmt(n.at)}</span>${(isAdmin||(uid&&n.by===uid))?`<button class="link" data-act="note-del" data-id="${esc(n.id)}">excluir</button>`:""}</div><div class="pre">${esc(n.text)}</div></div>`).join("");
+  return `<div class="notes">${li||`<div class="hint">Nenhum comentário nesta etapa ainda.</div>`}${canWrite?`<textarea data-draft="${esc(sid)}" aria-label="Novo comentário" placeholder="Escreva um comentário sobre esta etapa">${esc(drafts[sid]||"")}</textarea><div><button class="btn sm pri" data-act="note-add" data-s="${esc(sid)}">Publicar comentário</button></div>`:""}</div>`;
+}
+function rPlan(){
+  const seg=[["all","Todas"],["todo","Pendentes"],["doing","Em andamento"],["done","Concluídas"]]
+    .map(([k,l])=>`<button class="chip" data-act="filter" data-f="${k}" aria-pressed="${filter===k}">${l}</button>`).join("");
+  const hidCount=(ST.cfg.hidden||[]).length+(ST.cfg.hiddenSec||[]).length;
+  let html=`<div class="bar-tools"><h2 style="margin:0">Cronograma da implantação</h2><div class="seg" role="group" aria-label="Filtrar atividades">${seg}</div></div>
+    <div class="bar-tools"><span class="hint">${editing?"Modo de personalização: edite gestões, etapas e atividades deste cliente.":"Clique no círculo de uma atividade para alternar: não iniciada, em andamento, concluída."}</span>
+      <span class="row-gap">${isAdmin?`<button class="btn ${editing?"pri":""}" data-act="edit">${editing?"Concluir personalização":"Personalizar cronograma"}</button>`:""}${editing?`<button class="btn" data-act="g-new">+ Nova gestão</button>${hidCount?`<button class="btn" data-act="restore">Restaurar removidas (${hidCount})</button>`:""}`:""}<button class="chip" data-act="expand">Expandir tudo</button><button class="chip" data-act="collapse">Recolher tudo</button></span></div>`;
+  const ids=M.gs.map(G=>G.g.id);
+  for(const G of M.gs){
+    const g=G.g, isOpen=open.has(g.id);
+    const who=[...new Set(g.sections.flatMap(s=>s.areas.map(k=>AREA[k]?AREA[k].short:"")))].filter(Boolean).join(", ");
+    if(!G.on){
+      html+=`<div class="g off"><div class="gh" style="cursor:default"><span class="sq" style="background:var(--block)"></span><div><div class="nm">${esc(g.name)}</div><div class="who">Fora do escopo · não contratado. Não entra nos percentuais.</div></div><div class="r">${isAdmin?`<button class="btn sm" data-act="scope" data-g="${esc(g.id)}">Incluir no escopo</button>`:""}</div></div></div>`;
+      continue;
+    }
+    let body="";
+    if(editing){
+      const i=ids.indexOf(g.id);
+      body+=`<div class="etool"><button class="btn sm" data-act="g-ren" data-g="${esc(g.id)}">Renomear gestão</button><button class="btn sm" data-act="g-up" data-g="${esc(g.id)}" ${i===0?"disabled":""}>↑ Subir</button><button class="btn sm" data-act="g-down" data-g="${esc(g.id)}" ${i===ids.length-1?"disabled":""}>↓ Descer</button><button class="btn sm" data-act="s-new" data-g="${esc(g.id)}">+ Etapa</button><button class="btn sm" data-act="scope" data-g="${esc(g.id)}">Remover do escopo</button>${g.custom?`<button class="btn sm danger" data-act="g-del" data-g="${esc(g.id)}">Excluir gestão</button>`:""}</div>`;
+    }
+    if(G.depsUnmet){ const dn=g.deps.map(d=>M.by[d]?M.by[d].g.name:"").filter(Boolean).join(", ");
+      body+=`<p class="note">${G.unlocked?"Liberada manualmente, mesmo sem concluir":"Bloqueada: depende da conclusão de"} ${esc(dn)}.${(!G.unlocked&&!isAdmin)?" As atividades ficam liberadas quando a dependência for concluída ou quando a equipe NW liberar.":""} ${isAdmin?`<button class="btn sm" data-act="unlock" data-g="${esc(g.id)}">${G.unlocked?"Voltar a bloquear":"Liberar agora"}</button>`:""}</p>`; }
+    body+=`<div style="margin-top:10px"><button class="btn sm" data-act="note-toggle" data-s="${esc(g.id)}" aria-expanded="${openC.has(g.id)}">Comentários da gestão${noteCount(g.id)?" ("+noteCount(g.id)+")":""}</button>${notePanel(g.id)}</div>`;
+    const showAll = filter==="all" || editing;
+    for(const X of G.secs){
+      const s=X.s; const its=s.items.filter(it=>{ const st=pg(it.id).s||"todo"; return showAll||filter===st; });
+      if(!its.length && !editing) continue;
+      const sh=(G.blocked&&X.status==="todo")?"blocked":X.status;
+      const lock=(G.blocked && !isAdmin)||!canWrite;
+      body+=`<div class="sec" id="sec-${esc(s.id)}"><div class="sh"><div class="sn">${esc(s.name)}</div><span class="sw">${s.areas.length?"Resp.: "+s.areas.map(k=>AREA[k]?esc(AREA[k].short):"").join(", "):""}</span><span class="badge ${sh}">${LBL[sh]}</span><span class="sp num">${pc(X.pct)}</span><button class="btn sm" data-act="note-toggle" data-s="${esc(s.id)}" aria-expanded="${openC.has(s.id)}">Comentários${noteCount(s.id)?" ("+noteCount(s.id)+")":""}</button>
+        ${editing?`<div class="ed"><button class="btn sm" data-act="s-ren" data-g="${esc(g.id)}" data-s="${esc(s.id)}">Editar etapa</button><button class="btn sm" data-act="i-new" data-g="${esc(g.id)}" data-s="${esc(s.id)}">+ Atividade</button><button class="btn sm danger" data-act="s-del" data-g="${esc(g.id)}" data-s="${esc(s.id)}">Remover etapa</button></div>`:""}</div>`+notePanel(s.id);
+      for(const it of its){
+        const p=pg(it.id), st=p.s||"todo";
+        const lbl=st==="done"?"concluída":st==="doing"?"em andamento":"não iniciada";
+        const meta=st==="done"?`Concluída por ${esc(nameOf(p.by))} · ${fmt(p.at)}`:st==="doing"?`Iniciada por ${esc(nameOf(p.by))} · ${fmt(p.at)}`:"";
+        body+=`<div class="it ${st}"><button class="st ${st}" data-act="cycle" data-id="${esc(it.id)}" ${lock?"disabled":""} aria-label="${esc(it.t)}: ${lbl}. Clique para alterar.">${st==="done"?checkIcon():st==="doing"?dotIcon():""}</button><div class="tx">${esc(it.t)}<button class="link nb" data-act="note-toggle" data-s="${esc(it.id)}">${noteCount(it.id)?"comentários ("+noteCount(it.id)+")":"comentar"}</button>${editing?`<span class="ed"><button class="link" data-act="i-ren" data-g="${esc(g.id)}" data-s="${esc(s.id)}" data-id="${esc(it.id)}">editar</button> · <button class="link" data-act="i-del" data-id="${esc(it.id)}" data-c="${it.custom?1:0}">remover</button></span>`:""}</div><div class="mt">${meta}</div>${openC.has(it.id)?`<div style="grid-column:1/-1">${notePanel(it.id)}</div>`:""}</div>`;
+      }
+      if(editing && !its.length) body+=`<p class="note">Etapa sem atividades.</p>`;
+      body+=`</div>`;
+    }
+    if(!body.includes('class="sec"')) body+=`<p class="note">Nenhuma atividade neste filtro.</p>`;
+    html+=`<div class="g ${isOpen?"open":""}" id="g-${esc(g.id)}"><button class="gh" data-act="toggle" data-g="${esc(g.id)}" aria-expanded="${isOpen}">
+      <span class="sq" style="background:#${esc(g.color)}"></span>
+      <div style="min-width:0"><div class="nm">${esc(g.name)}</div><div class="who">${esc(who)}${who?" · ":""}<span class="num">${G.done}/${G.total}</span> atividades</div></div>
+      <div class="r"><span class="badge ${G.shown}">${G.shown==="blocked"?"🔒 ":""}${LBL[G.shown]}</span><span class="pc num">${pc(G.pct)}</span><svg class="chev" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button>
+      <div class="gprog"><div class="bar"><b class="d" style="width:${G.pct*100}%"></b><b class="g" style="width:${G.total?G.doing/G.total*100:0}%"></b></div></div>
+      <div class="gb">${body}</div></div>`;
+  }
+  $("#s-plan").innerHTML=html;
+}
+
+/* ---------- agenda ---------- */
+function rCal(){
+  const first=new Date(cal.y,cal.m,1), start=new Date(cal.y,cal.m,1-first.getDay());
+  const total=Math.ceil((first.getDay()+new Date(cal.y,cal.m+1,0).getDate())/7)*7;
+  const byDay={}; M.agenda.forEach(e=>{ (byDay[e.date]=byDay[e.date]||[]).push(e); });
+  const tdy=ds(new Date());
+  const title=new Date(cal.y,cal.m,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  let grid=["dom","seg","ter","qua","qui","sex","sáb"].map(d=>`<div class="dh">${d}</div>`).join("");
+  for(let i=0;i<total;i++){
+    const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i), k=ds(d), evs=byDay[k]||[];
+    const chips=evs.slice(0,2).map(e=>`<span class="chipe ${e.state}">${esc(e.start||"")} ${esc(e.title)}</span>`).join("")+(evs.length>2?`<span class="more">+${evs.length-2}</span>`:"");
+    grid+=`<button class="cell ${d.getMonth()!==cal.m?"out":""} ${k===tdy?"today":""} ${k===cal.day?"sel":""}" data-act="day" data-d="${k}" aria-label="${d.getDate()} de ${d.toLocaleDateString("pt-BR",{month:"long"})}, ${evs.length} agendamento${evs.length===1?"":"s"}"><span class="dn num">${d.getDate()}</span>${chips}</button>`;
+  }
+  const legend=Object.keys(ELBL).map(k=>`<span><span class="badge ${k}">${ELBL[k]}</span></span>`).join("");
+  let main="";
+  if(cal.view==="mes"){
+    main=`<div class="cal">${grid}</div>`;
+    if(cal.day){
+      const evs=byDay[cal.day]||[];
+      const dt=toDate(cal.day).toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
+      main+=`<div class="card dayp" style="margin-top:12px"><div class="bar-tools" style="margin-bottom:4px"><h3 style="margin:0">${esc(up(dt))}</h3>${isAdmin?`<button class="btn sm pri" data-act="ev-new" data-d="${cal.day}">+ Agendar neste dia</button>`:""}</div>${evs.length?evs.map(evRow).join(""):`<div class="hint" style="padding:8px 0">Nenhum agendamento neste dia.</div>`}</div>`;
+    }
+  } else {
+    const nowS=new Date(); const fut=M.agenda.filter(e=>e.state==="agendado"), pend=M.agenda.filter(e=>e.state==="registrar"), past=M.agenda.filter(e=>e.state==="realizado"||e.state==="cancelado").reverse();
+    const blk=(t,l)=>`<div class="card dayp" style="margin-bottom:12px"><h3>${t} <span class="hint">(${l.length})</span></h3>${l.length?l.map(e=>evRow(e,true)).join(""):`<div class="hint">Nada por aqui.</div>`}</div>`;
+    main=blk("Ficha pendente (já aconteceram)",pend)+blk("Próximos agendamentos",fut)+blk("Anteriores",past);
+  }
+  $("#s-cal").innerHTML=`<div class="bar-tools"><h2 style="margin:0">Agenda</h2><span class="row-gap">
+      <span class="seg"><button class="chip" data-act="cview" data-v="mes" aria-pressed="${cal.view==="mes"}">Mês</button><button class="chip" data-act="cview" data-v="lista" aria-pressed="${cal.view==="lista"}">Lista</button></span>
+      ${isAdmin?`<button class="btn pri" data-act="ev-new" data-d="${cal.day||tdy}">+ Novo agendamento</button>`:""}</span></div>
+    ${cal.view==="mes"?`<div class="bar-tools"><span class="row-gap"><button class="btn" data-act="cprev" aria-label="Mês anterior">‹</button><b style="min-width:150px;text-align:center;font-family:var(--f-head)">${esc(up(title))}</b><button class="btn" data-act="cnext" aria-label="Próximo mês">›</button><button class="btn" data-act="ctoday">Hoje</button></span><span class="legend-row">${legend}</span></div>`:`<div class="legend-row" style="margin-bottom:12px">${legend}</div>`}
+    ${main}`;
+}
+function evRow(e,withDate){
+  const sub=[e.tipo,e.mod,gsLabel(e.gid,e.sid)].filter(Boolean).join(" · ");
+  return `<div class="evr"><div class="tm num">${withDate?fmtD(e.date)+"<br>":""}${esc(e.start||"")}${e.end?"–"+esc(e.end):""}</div><div class="tt"><b>${esc(e.title)}</b><div class="sub">${esc(sub)}</div></div><div class="row-gap"><span class="badge ${e.state}">${ELBL[e.state]}</span><button class="btn sm" data-act="ev-open" data-id="${esc(e.id)}">Abrir</button></div></div>`;
+}
+
+/* ---------- fichas ---------- */
+const fichaNo=(n)=>"FA-"+String(n||0).padStart(4,"0");
+function rFichas(){
+  const rows=M.fichas.map(f=>`<tr class="clk" data-act="f-open" data-id="${esc(f.id)}"><td class="num"><b>${fichaNo(f.no)}</b></td><td class="num">${fmtD(f.date)}<br><span class="hint">${esc(f.start||"")}${f.end?"–"+esc(f.end):""}</span></td><td>${esc(f.tipo||"")}<br><span class="hint">${esc(f.mod||"")}</span></td><td>${esc(gsLabel(f.gid,f.sid))}</td><td>${esc(f.consultor||"")}</td><td class="num">${hm(fichaMin(f))}</td><td class="num">${despTotal(f)?brl(despTotal(f)):"—"}</td><td><span class="badge ${f.status==="rascunho"?"doing":"realizado"}">${f.status==="rascunho"?"Rascunho":"Finalizada"}</span></td></tr>`).join("");
+  $("#s-fichas").innerHTML=`<div class="bar-tools"><h2 style="margin:0">Fichas de atendimento</h2><span class="row-gap">${M.fichas.length?`<button class="btn" data-act="f-csv-all">Exportar CSV</button>`:""}${isAdmin?`<button class="btn pri" data-act="f-new">+ Nova ficha</button>`:""}</span></div>
+    <div class="kpis" style="margin-bottom:12px"><div class="kpi"><div class="k">Fichas lançadas</div><div class="v num">${M.fichas.length}</div></div><div class="kpi"><div class="k">Horas atendidas</div><div class="v num">${hm(M.fichaMins)}</div></div><div class="kpi"><div class="k">Pendentes na agenda</div><div class="v num">${M.pendFicha}</div><div class="s"><button class="link" data-act="cview" data-v="lista" data-goto="agenda">ver na agenda</button></div></div></div>
+    ${M.fichas.length?`<div class="card tbl" style="padding:6px 8px"><table><thead><tr><th>Nº</th><th>Data</th><th>Tipo</th><th>Gestão › Etapa</th><th>Consultor</th><th>Duração</th><th>Despesas</th><th>Situação</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="empty">Nenhuma ficha lançada ainda. Crie uma ficha por aqui ou direto de um agendamento na aba Agenda.</div>`}`;
+}
+
+/* ---------- abas ---------- */
+function rTabs(){
+  $("#tabs").innerHTML=TABS.map(([k,l])=>`<button class="tab" role="tab" data-act="tab" data-t="${k}" aria-selected="${tab===k}">${l}${k==="agenda"&&M.pendFicha?`<span class="cnt" title="Fichas pendentes">${M.pendFicha}</span>`:""}</button>`).join("");
+  for(const [id,t] of Object.entries(SEC_TAB)) $("#"+id).hidden = t!==tab;
+}
+function setTab(t){ if(!TABS.some(x=>x[0]===t)) t="visao-geral"; tab=t; try{ if(location.hash!=="#"+t) location.hash=t; }catch(e){} if(M) rTabs(); }
+window.addEventListener("hashchange",()=>{ const t=(location.hash||"").slice(1); if(TABS.some(x=>x[0]===t)&&t!==tab){ tab=t; if(M) rTabs(); } });
+
+function rFoot(){
+  const m={live:"Tudo é salvo e compartilhado com quem abrir esta página.",slow:"Ainda não foi possível alcançar os dados salvos; o que aparece pode estar desatualizado.",local:"Modo local: nada desta visita é salvo.",connecting:"Conectando aos dados salvos…"}[link];
+  $("#foot").innerHTML=`<span class="pill">${link==="live"?"Salvo":link==="local"?"Local":"…"}</span><span>${m}${canWrite?(isAdmin?"":" Você pode registrar o andamento das atividades; agenda, fichas e personalização ficam com a equipe NW."):" Acesso somente para visualização."}</span>`;
+}
+function render(){
+  AL=effAreas(); AREA=Object.fromEntries(AL.map(a=>[a.k,a]));
+  const ae=document.activeElement, dk=ae&&ae.dataset&&ae.dataset.draft, ss=dk?ae.selectionStart:0, se=dk?ae.selectionEnd:0;
+  M=compute();
+  if(!openInit){ openInit=true; if(M.rec) open.add(M.rec.G.g.id); }
+  rResumo(); rCharts(); rEv(); rUsers(); rPlan(); rCal(); rFichas(); if(typeof rArquivos==="function") rArquivos(); rTabs(); rFoot();
+  if(dk){ const t=document.querySelector('textarea[data-draft="'+dk+'"]'); if(t){ t.focus(); try{ t.setSelectionRange(ss,se); }catch(e){} } }
+}
+
+/* ---------- gravação ---------- */
+async function put(c,id,data){ if(!db){ ST[c][id]=data; render(); return; } await db.doc(c+"/"+id).set(data); }
+async function del(c,id){ if(!db){ delete ST[c][id]; render(); return; } await db.doc(c+"/"+id).delete(); }
+async function putCfg(patch){ const next=Object.assign({},ST.cfg,patch); if(!db){ ST.cfg=next; render(); return; } await db.doc("plan/cfg").set(next); }
+const guard=async(fn,msg)=>{ try{ await fn(); return true; }catch(e){ if(e&&e.api){ if(e.status===401){ location.reload(); return false; } toast(e.message); return false; } toast(msg||"Sem permissão para salvar. Peça acesso de editor ao consultor NW."); return false; } };
+async function setStatus(id,next){
+  if(pending.has(id)) return;
+  const rec=next==="todo"?null:{s:next,by:uid,at:new Date().toISOString()};
+  if(!db){ if(!rec) delete ST.progress[id]; else ST.progress[id]=rec; render(); return; }
+  pending.add(id);
+  try{ if(!rec) await db.doc("progress/"+id).delete(); else await db.doc("progress/"+id).set(rec); }
+  catch(e){ toast("Sem permissão para registrar. Peça acesso de colaborador ao consultor NW."); }
+  finally{ pending.delete(id); }
+}
+
+/* ---------- modal ---------- */
+function openModal(title,body,o){
+  MD=Object.assign({},o||{});
+  const foot=`<div class="mfoot"><span class="sp">${MD.left||""}</span>${MD.noCancel?"":`<button type="button" class="btn" data-act="m-close">${MD.submit?"Cancelar":"Fechar"}</button>`}${MD.extra||""}${MD.submit?`<button type="submit" class="btn pri">${esc(MD.submit)}</button>`:""}</div>`;
+  $("#modal").innerHTML=`<div class="md${MD.wide?" wide":""}" role="dialog" aria-modal="true" aria-labelledby="mdt"><div class="mh"><h3 id="mdt">${esc(title)}</h3><button type="button" class="x" data-act="m-close" aria-label="Fechar">×</button></div><form id="mf" autocomplete="off"><div class="mb">${body}</div>${foot}</form></div>`;
+  $("#modal").classList.add("on");
+  const f=$("#mf"); if(MD.onOpen) MD.onOpen(f);
+  const first=f.querySelector("input:not([type=hidden]),select,textarea"); if(first && MD.submit) first.focus();
+}
+function closeModal(){ $("#modal").classList.remove("on"); $("#modal").innerHTML=""; MD=null; }
+document.addEventListener("keydown",(e)=>{ if(e.key==="Escape"&&MD) closeModal(); });
+document.addEventListener("submit",async(e)=>{ if(e.target.id!=="mf") return; e.preventDefault(); if(MD&&MD.onSubmit) await MD.onSubmit(new FormData(e.target),e.target); });
+document.addEventListener("mousedown",(e)=>{ if(e.target.id==="modal"&&MD) closeModal(); });
+const F={
+  txt:(n,l,v,x="")=>`<div class="f"><label for="f-${n}">${l}</label><input type="text" id="f-${n}" name="${n}" value="${esc(v)}" ${x}></div>`,
+  date:(n,l,v,x="")=>`<div class="f"><label for="f-${n}">${l}</label><input type="date" id="f-${n}" name="${n}" value="${esc(v)}" ${x}></div>`,
+  time:(n,l,v,x="")=>`<div class="f"><label for="f-${n}">${l}</label><input type="time" id="f-${n}" name="${n}" value="${esc(v)}" ${x}></div>`,
+  ta:(n,l,v,x="")=>`<div class="f"><label for="f-${n}">${l}</label><textarea id="f-${n}" name="${n}" ${x}>${esc(v)}</textarea></div>`,
+  sel:(n,l,list,v)=>`<div class="f"><label for="f-${n}">${l}</label><select id="f-${n}" name="${n}">${list.map(o=>{ const a=Array.isArray(o)?o:[o,o]; return `<option value="${esc(a[0])}" ${String(a[0])===String(v)?"selected":""}>${esc(a[1])}</option>`; }).join("")}</select></div>`,
+  chk:(n,l,list,vals)=>`<div class="f"><span class="lb">${l}</span><div class="chk">${list.map(o=>{ const a=Array.isArray(o)?o:[o,o]; return `<label><input type="checkbox" name="${n}" value="${esc(a[0])}" ${(vals||[]).includes(a[0])?"checked":""}> ${esc(a[1])}</label>`; }).join("")}</div></div>`
+};
+function gsFields(gid,sid){
+  const gl=[["","Geral (sem gestão específica)"]].concat(M.gs.filter(G=>G.on).map(G=>[G.g.id,G.g.name]));
+  return `<div class="fr">${F.sel("gid","Gestão",gl,gid||"")}${F.sel("sid","Etapa",[["","—"]],sid||"")}</div>`;
+}
+function wireGS(form,sel,withItems){
+  const gsel=form.elements.gid, ssel=form.elements.sid, box=form.querySelector("#itbox");
+  const fillS=()=>{ const G=M.by[gsel.value]; ssel.innerHTML=`<option value="">—</option>`+(G?G.secs.map(X=>`<option value="${esc(X.s.id)}">${esc(X.s.name)}</option>`).join(""):""); };
+  const fillI=()=>{ if(!box) return; const G=M.by[gsel.value]; const X=G&&G.secs.find(x=>x.s.id===ssel.value);
+    const picked=new Set(Array.from(box.querySelectorAll("input:checked")).map(i=>i.value));
+    box.innerHTML = X ? X.s.items.map(it=>`<label><input type="checkbox" name="items" value="${esc(it.id)}" ${picked.has(it.id)?"checked":""}> <span>${esc(it.t)}${pg(it.id).s==="done"?' <span class="hint">(já concluída)</span>':""}</span></label>`).join("") || `<span class="hint">Etapa sem atividades.</span>` : `<span class="hint">Escolha uma gestão e uma etapa para listar as atividades trabalhadas.</span>`; };
+  gsel.addEventListener("change",()=>{ fillS(); fillI(); });
+  ssel.addEventListener("change",fillI);
+  fillS(); gsel.value=(sel&&sel.gid)||""; fillS(); ssel.value=(sel&&sel.sid)||""; if(!ssel.value && sel && sel.sid){ /* etapa removida */ }
+  if(box){ box.innerHTML=""; fillI(); (sel&&sel.items||[]).forEach(id=>{ const i=Array.from(box.querySelectorAll("input")).find(x=>x.value===id); if(i) i.checked=true; }); }
+}
+
+/* --- agendamento --- */
+function openEvForm(ev,defDate){
+  const isNew=!ev||!ev.id;
+  const e=ev||{};
+  const dd=e.date||defDate||ds(new Date());
+  const past=toDate(dd,"23:59")<new Date();
+  const body=F.txt("title","Título do agendamento",e.title||"","placeholder=\"Ex.: Treinamento de Compras\"")+
+    `<div class="fr">${F.date("date","Data",dd,"required")}${F.time("start","Início",e.start||"09:00","required")}${F.time("end","Término",e.end||"10:00")}</div>
+     <div class="fr">${F.sel("tipo","Tipo",TIPOS,e.tipo||"Treinamento")}${F.sel("mod","Modalidade",MODS,e.mod||"Remoto")}${F.txt("consultor","Consultor NW",e.consultor||myName)}</div>`+
+    gsFields(e.gid,e.sid)+F.chk("part","Participantes",peopleList(),e.part||[])+F.txt("local","Local ou link da reunião",e.local||"")+F.ta("obs","Observações",e.obs||"")+
+    (isNew?`<div class="f"><div class="chk"><label><input type="checkbox" name="fichaNow" ${past?"checked":""}> Este atendimento já aconteceu: lançar a ficha logo após salvar</label></div></div>`:
+      F.sel("status","Situação",[["agendado","Agendado"],["realizado","Realizado"],["cancelado","Cancelado"]],e.status||"agendado"));
+  openModal(isNew?"Novo agendamento":"Editar agendamento",body,{submit:"Salvar",
+    onOpen:(f)=>{ wireGS(f,{gid:e.gid,sid:e.sid});
+      const cb=f.elements.fichaNow; if(cb){ let touched=false; cb.addEventListener("change",()=>{ touched=true; });
+        f.elements.date.addEventListener("change",()=>{ if(!touched && f.elements.date.value) cb.checked=toDate(f.elements.date.value,"23:59")<new Date(); }); } },
+    onSubmit:async(fd)=>{
+      const id=isNew?newId():e.id, tipo=fd.get("tipo"), gid=fd.get("gid")||"";
+      const rec={title:(fd.get("title")||"").trim()||(tipo+(gid?" – "+gName(gid):"")),date:fd.get("date"),start:fd.get("start")||"",end:fd.get("end")||"",tipo,mod:fd.get("mod"),consultor:(fd.get("consultor")||"").trim(),gid,sid:fd.get("sid")||"",part:fd.getAll("part"),local:(fd.get("local")||"").trim(),obs:(fd.get("obs")||"").trim(),status:isNew?"agendado":(fd.get("status")||"agendado"),fichaId:e.fichaId||null,by:e.by||uid,at:e.at||new Date().toISOString()};
+      if(!rec.date){ toast("Informe a data."); return; }
+      if(rec.end && rec.start && rec.end<=rec.start){ toast("O término deve ser depois do início."); return; }
+      if(await guard(()=>put("agenda",id,rec))){
+        cal.day=rec.date; const d=toDate(rec.date); cal.y=d.getFullYear(); cal.m=d.getMonth();
+        if(isNew && fd.get("fichaNow")){ openFichaForm(null,Object.assign({id},rec)); }
+        else { closeModal(); toast("Agendamento salvo"); }
+      }
+    }});
+}
+function openEvView(id){
+  const e=M.agenda.find(x=>x.id===id); if(!e) return;
+  const part=(e.part||[]).join(", ")||"—";
+  const body=`<div class="row-gap"><span class="badge ${e.state}">${ELBL[e.state]}</span></div><dl class="dl"><dt>Data</dt><dd>${fmtD(e.date)} · ${esc(e.start||"")}${e.end?"–"+esc(e.end):""}</dd><dt>Tipo</dt><dd>${esc(e.tipo||"")} · ${esc(e.mod||"")}</dd><dt>Consultor</dt><dd>${esc(e.consultor||"—")}</dd><dt>Gestão › Etapa</dt><dd>${esc(gsLabel(e.gid,e.sid))}</dd><dt>Participantes</dt><dd>${esc(part)}</dd><dt>Local / link</dt><dd>${esc(e.local||"—")}</dd><dt>Observações</dt><dd>${esc(e.obs||"—")}</dd></dl>`;
+  const f=e.fichaId&&ST.fichas[e.fichaId];
+  let extra="";
+  if(f) extra+=`<button type="button" class="btn pri" data-act="f-open" data-id="${esc(e.fichaId)}">Ver ficha ${fichaNo(f.no)}</button>`;
+  else if(isAdmin && e.status!=="cancelado") extra+=`<button type="button" class="btn pri" data-act="ev-ficha" data-id="${esc(id)}">Lançar ficha de atendimento</button>`;
+  const left=isAdmin?`<button type="button" class="btn" data-act="ev-edit" data-id="${esc(id)}">Editar</button>${e.status!=="cancelado"&&!f?`<button type="button" class="btn" data-act="ev-cancel" data-id="${esc(id)}">Cancelar agendamento</button>`:""}<button type="button" class="btn danger" data-act="ev-del" data-id="${esc(id)}">Excluir</button>`:"";
+  openModal(e.title,body,{left,extra});
+}
+
+/* --- ficha --- */
+function openFichaForm(f,ev){
+  const isNew=!f||!f.id;
+  const s=f||{};
+  const src=ev||{};
+  const base=isNew?{date:src.date,start:src.start,end:src.end,tipo:src.tipo,mod:src.mod,consultor:src.consultor,gid:src.gid,sid:src.sid,part:src.part,resumo:src.title}:s;
+  const hs0=(s.horarios&&s.horarios.length)?s.horarios:[{di:base.date||ds(new Date()),hi:base.start||"09:00",df:base.date||ds(new Date()),hf:base.end||"10:00"}];
+  const ds0=s.despesas||[];
+  const legacyObs=[s.pauta&&("Assuntos tratados:\n"+s.pauta),s.pend&&("Dúvidas e pendências:\n"+s.pend),s.prox&&("Próximos passos:\n"+s.prox)].filter(Boolean).join("\n\n");
+  const veics=[...new Set(Object.values(ST.fichas).map(x=>x.veic&&x.veic.cod).filter(Boolean).concat([VEIC_REMOTO.cod]))];
+  const veic0=s.veic||((base.mod||"Remoto")==="Remoto"?{cod:VEIC_REMOTO.cod,desc:VEIC_REMOTO.desc,transp:VEIC_REMOTO.transp}:{cod:"",desc:"",transp:""});
+  const body=`<div class="hdr">${F.txt("resumo","Descrição resumida",base.resumo||"")}${F.sel("tipo","Categoria",TIPOS,base.tipo||"Treinamento")}${F.sel("mod","Modalidade",MODS,base.mod||"Remoto")}${F.txt("os","Ordem de serviço",s.os||"")}${F.txt("osdesc","Descrição do serviço",s.osdesc||"")}</div>
+  <div class="mtabs" role="tablist"><button type="button" role="tab" data-mt="h" aria-selected="true">1 - Horários</button><button type="button" role="tab" data-mt="d" aria-selected="false">2 - Despesas</button><button type="button" role="tab" data-mt="o" aria-selected="false">3 - Observações</button><button type="button" role="tab" data-mt="c" aria-selected="false">4 - Informações complementares</button></div>
+  <div class="mpane on" data-p="h"><div class="fr">${F.txt("consultor","Executor",base.consultor||myName)}${F.txt("execcod","Cód. executor",s.execcod||"")}</div><div id="hrows" style="display:flex;flex-direction:column;gap:8px"></div><div class="row-gap"><button type="button" class="btn" data-mact="add-h">+ Incluir horário</button><span class="sp"></span><span class="sumline">Total: <span id="htot">0</span></span></div></div>
+  <div class="mpane" data-p="d"><div id="drows" style="display:flex;flex-direction:column;gap:8px"></div><div class="row-gap"><button type="button" class="btn" data-mact="add-d" data-item="Translado">+ Translado</button><button type="button" class="btn" data-mact="add-d" data-item="Almoço">+ Almoço</button><button type="button" class="btn" data-mact="add-d" data-item="Outros">+ Outra despesa</button></div><div class="sumline">Total das despesas: <span id="dtot">R$ 0,00</span></div></div>
+  <div class="mpane" data-p="o">${F.ta("obs","Descrição da ficha",s.obs!=null?s.obs:legacyObs,'rows="6"')}
+    <div class="sub-h">Vínculo com a implantação</div>`+gsFields(base.gid,base.sid)+
+    F.chk("part","Participantes",peopleList(),base.part||[])+F.txt("partx","Outros participantes",s.partx||"")+
+    `<div class="f"><span class="lb">Atividades trabalhadas</span><div class="itbox" id="itbox"></div><div class="chk" style="margin-top:6px"><label><input type="checkbox" name="concluir" ${isNew?"checked":""}> Marcar as atividades selecionadas como concluídas no cronograma ao salvar</label></div></div>
+    ${F.sel("status","Situação da ficha",[["final","Finalizada"],["rascunho","Rascunho"]],s.status||"final")}</div>
+  <div class="mpane" data-p="c"><div class="fr"><div class="f"><label for="f-vcod">Veículo</label><input type="text" id="f-vcod" name="vcod" list="vlist" value="${esc(veic0.cod)}"><datalist id="vlist">${veics.map(v=>`<option value="${esc(v)}">`).join("")}</datalist></div>${F.txt("vdesc","Descrição do veículo",veic0.desc)}</div>${F.txt("transp","Transportadora",veic0.transp)}<div class="hint">Veículo usado no deslocamento até o cliente. Em atendimento remoto, use o veículo "${esc(VEIC_REMOTO.desc)}".</div></div>`;
+  openModal(isNew?"Nova ficha de atendimento":"Editar ficha "+fichaNo(s.no),body,{submit:"Salvar ficha",wide:true,
+    onOpen:(fm)=>{
+      wireGS(fm,{gid:base.gid,sid:base.sid,items:s.items||[]});
+      const hr=fm.querySelector("#hrows"), dr=fm.querySelector("#drows");
+      const readH=()=>Array.from(hr.children).map(r=>({di:r.querySelector("[name=h_di]").value,hi:r.querySelector("[name=h_hi]").value,df:r.querySelector("[name=h_df]").value,hf:r.querySelector("[name=h_hf]").value}));
+      const calcH=()=>{ let t=0; Array.from(hr.children).forEach((r,i)=>{ const m=lineMin(readH()[i]); t+=m; r.querySelector(".tot").textContent=hm(m); }); fm.querySelector("#htot").textContent=hm(t); };
+      const addH=(h)=>{ const r=document.createElement("div"); r.className="lrow h"; r.innerHTML=`<div class="f"><label>Data início</label><input type="date" name="h_di" value="${esc(h.di||"")}"></div><div class="f"><label>Hora início</label><input type="time" name="h_hi" value="${esc(h.hi||"")}"></div><div class="f"><label>Data término</label><input type="date" name="h_df" value="${esc(h.df||h.di||"")}"></div><div class="f"><label>Hora término</label><input type="time" name="h_hf" value="${esc(h.hf||"")}"></div><span class="tot"></span><button type="button" class="x2" data-mact="del-row" aria-label="Remover horário">×</button>`; hr.appendChild(r); calcH(); };
+      const calcD=()=>{ let t=0; dr.querySelectorAll("[name=d_val]").forEach(i=>{ t+=Number(i.value)||0; }); fm.querySelector("#dtot").textContent=brl(t); };
+      const addD=(d)=>{ const r=document.createElement("div"); r.className="lrow d"; r.innerHTML=`<div class="f"><label>Item</label><select name="d_item">${DESPESAS.map(x=>`<option ${x===d.item?"selected":""}>${esc(x)}</option>`).join("")}</select></div><div class="f"><label>Descrição</label><input type="text" name="d_desc" value="${esc(d.desc||"")}"></div><div class="f"><label>Valor total (R$)</label><input type="number" name="d_val" min="0" step="0.01" inputmode="decimal" value="${esc(d.val==null?"":d.val)}"></div><div class="f"><label>Data</label><input type="date" name="d_date" value="${esc(d.date||"")}"></div><div class="f"><label>Responsável</label><input type="text" name="d_resp" value="${esc(d.resp||"")}"></div><button type="button" class="x2" data-mact="del-row" aria-label="Remover despesa">×</button>`; dr.appendChild(r); calcD(); };
+      hs0.forEach(addH); ds0.forEach(addD);
+      const dateRef=()=>(hr.querySelector("[name=h_di]")||{}).value||ds(new Date());
+      fm.addEventListener("input",(e)=>{ if(e.target.closest("#hrows")) calcH(); if(e.target.name==="d_val") calcD();
+        if(e.target.name==="h_di"){ const r=e.target.closest(".lrow"), df=r.querySelector("[name=h_df]"); if(!df.value||df.value<e.target.value) df.value=e.target.value; calcH(); } });
+      fm.addEventListener("click",(e)=>{
+        const t=e.target.closest("[data-mt]"); if(t){ fm.querySelectorAll("[data-mt]").forEach(b=>b.setAttribute("aria-selected",String(b===t))); fm.querySelectorAll(".mpane").forEach(p=>p.classList.toggle("on",p.dataset.p===t.dataset.mt)); return; }
+        const a=e.target.closest("[data-mact]"); if(!a) return;
+        if(a.dataset.mact==="add-h"){ const last=readH().pop()||{}; addH({di:last.df||dateRef(),hi:last.hf||"",df:last.df||dateRef(),hf:""}); }
+        if(a.dataset.mact==="add-d") addD({item:a.dataset.item,date:dateRef(),resp:fm.elements.consultor.value});
+        if(a.dataset.mact==="del-row"){ a.closest(".lrow").remove(); calcH(); calcD(); }
+      });
+      // modalidade remota preenche o veículo padrão se ainda estiver vazio
+      fm.elements.mod.addEventListener("change",()=>{ if(fm.elements.mod.value==="Remoto" && !fm.elements.vcod.value){ fm.elements.vcod.value=VEIC_REMOTO.cod; fm.elements.vdesc.value=VEIC_REMOTO.desc; fm.elements.transp.value=VEIC_REMOTO.transp; } });
+    },
+    onSubmit:async(fd,fm)=>{
+      const goTab=(k)=>{ const b=fm.querySelector(`[data-mt="${k}"]`); if(b) b.click(); };
+      const horarios=Array.from(fm.querySelectorAll("#hrows .lrow")).map(r=>({di:r.querySelector("[name=h_di]").value,hi:r.querySelector("[name=h_hi]").value,df:r.querySelector("[name=h_df]").value,hf:r.querySelector("[name=h_hf]").value}));
+      if(!horarios.length){ goTab("h"); toast("Inclua ao menos um horário."); return; }
+      for(const h of horarios){ if(!h.di||!h.hi||!h.df||!h.hf){ goTab("h"); toast("Preencha data e hora de início e término."); return; } if(lineMin(h)<=0){ goTab("h"); toast("O término deve ser depois do início."); return; } }
+      const despesas=Array.from(fm.querySelectorAll("#drows .lrow")).map(r=>({item:r.querySelector("[name=d_item]").value,desc:r.querySelector("[name=d_desc]").value.trim(),val:Math.round((Number(r.querySelector("[name=d_val]").value)||0)*100)/100,date:r.querySelector("[name=d_date]").value,resp:r.querySelector("[name=d_resp]").value.trim()}));
+      if(despesas.some(d=>d.val<=0)){ goTab("d"); toast("Informe o valor de cada despesa ou remova a linha."); return; }
+      const id=isNew?newId():s.id;
+      const no=isNew?(Math.max(0,...Object.values(ST.fichas).map(x=>x.no||0))+1):s.no;
+      const items=fd.getAll("items");
+      const first=horarios[0];
+      const rec={no,date:first.di,start:first.hi,end:first.df===first.di?first.hf:"23:59",horarios,despesas,
+        resumo:(fd.get("resumo")||"").trim(),os:(fd.get("os")||"").trim(),osdesc:(fd.get("osdesc")||"").trim(),
+        tipo:fd.get("tipo"),mod:fd.get("mod"),consultor:(fd.get("consultor")||"").trim(),execcod:(fd.get("execcod")||"").trim(),
+        gid:fd.get("gid")||"",sid:fd.get("sid")||"",part:fd.getAll("part"),partx:(fd.get("partx")||"").trim(),items,
+        obs:(fd.get("obs")||"").trim(),pauta:"",pend:"",prox:"",
+        veic:{cod:(fd.get("vcod")||"").trim(),desc:(fd.get("vdesc")||"").trim(),transp:(fd.get("transp")||"").trim()},
+        status:fd.get("status"),eventId:(isNew?(src.id||null):(s.eventId||null)),by:isNew?uid:s.by,at:isNew?new Date().toISOString():s.at};
+      if(!(await guard(()=>put("fichas",id,rec)))) return;
+      if(rec.eventId && ST.agenda[rec.eventId]){ await guard(()=>put("agenda",rec.eventId,Object.assign({},ST.agenda[rec.eventId],{status:"realizado",fichaId:id}))); }
+      if(fd.get("concluir")) for(const it of items){ if(pg(it).s!=="done") await setStatus(it,"done"); }
+      closeModal(); toast("Ficha "+fichaNo(no)+" salva");
+    }});
+}
+function actNames(f){ const all={}; for(const G of M.gs) for(const X of G.secs) for(const it of X.s.items) all[it.id]=it.t; return (f.items||[]).map(i=>(all[i]||"(atividade removida)")+(pg(i).s==="done"?" (concluída)":"")); }
+function openFichaView(id){
+  const f=ST.fichas[id]; if(!f) return;
+  const part=[].concat(f.part||[],f.partx?[f.partx]:[]).join(", ")||"—";
+  const its=actNames(f); const itsHtml=its.length?`<ul style="margin:0;padding-left:18px">${its.map(i=>`<li>${esc(i)}</li>`).join("")}</ul>`:"—";
+  const hl=fichaH(f), dl=fichaDesp(f), v=f.veic||{};
+  const obs=f.obs!=null&&f.obs!==""?f.obs:[f.pauta,f.pend,f.prox].filter(Boolean).join("\n\n");
+  const body=`<div class="row-gap"><span class="badge ${f.status==="rascunho"?"doing":"realizado"}">${f.status==="rascunho"?"Rascunho":"Finalizada"}</span><span class="hint">Lançada por ${esc(nameOf(f.by))} em ${fmt(f.at)}</span></div>
+    <dl class="dl wide"><dt>Descrição resumida</dt><dd>${esc(f.resumo||"—")}</dd><dt>Categoria</dt><dd>${esc(f.tipo||"")} · ${esc(f.mod||"")}</dd><dt>Ordem de serviço</dt><dd>${esc(f.os||"—")}${f.osdesc?" · "+esc(f.osdesc):""}</dd><dt>Executor</dt><dd>${esc(f.consultor||"—")}${f.execcod?" ("+esc(f.execcod)+")":""}</dd><dt>Gestão › Etapa</dt><dd>${esc(gsLabel(f.gid,f.sid))}</dd><dt>Participantes</dt><dd>${esc(part)}</dd></dl>
+    <div><div class="sub-h">1 - Horários</div><table class="tb2"><thead><tr><th>Início</th><th>Término</th><th class="r">Total</th></tr></thead><tbody>${hl.map(h=>`<tr><td class="num">${fmtD(h.di)} ${esc(h.hi||"")}</td><td class="num">${fmtD(h.df||h.di)} ${esc(h.hf||"")}</td><td class="r num">${hm(lineMin(h))}</td></tr>`).join("")}<tr><td colspan="2"><b>Total</b></td><td class="r num"><b>${hm(fichaMin(f))}</b></td></tr></tbody></table></div>
+    <div><div class="sub-h">2 - Despesas</div>${dl.length?`<table class="tb2"><thead><tr><th>Item</th><th>Descrição</th><th>Data</th><th>Responsável</th><th class="r">Valor</th></tr></thead><tbody>${dl.map(d=>`<tr><td>${esc(d.item)}</td><td>${esc(d.desc||"")}</td><td class="num">${d.date?fmtD(d.date):""}</td><td>${esc(d.resp||"")}</td><td class="r num">${brl(d.val)}</td></tr>`).join("")}<tr><td colspan="4"><b>Total</b></td><td class="r num"><b>${brl(despTotal(f))}</b></td></tr></tbody></table>`:`<div class="hint" style="margin-top:6px">Sem despesas.</div>`}</div>
+    <div><div class="sub-h">3 - Observações</div><div class="pre" style="margin-top:6px">${esc(obs||"—")}</div></div>
+    <div><div class="sub-h">Atividades trabalhadas</div><div style="margin-top:6px">${itsHtml}</div></div>
+    <div><div class="sub-h">4 - Informações complementares</div><dl class="dl wide" style="margin-top:6px"><dt>Veículo</dt><dd>${esc(v.cod||"—")}${v.desc?" · "+esc(v.desc):""}</dd><dt>Transportadora</dt><dd>${esc(v.transp||"—")}</dd></dl></div>`;
+  const left=isAdmin?`<button type="button" class="btn" data-act="f-edit" data-id="${esc(id)}">Editar</button><button type="button" class="btn danger" data-act="f-del" data-id="${esc(id)}">Excluir</button>`:"";
+  const extra=`<button type="button" class="btn" data-act="f-csv" data-id="${esc(id)}">Exportar CSV</button><button type="button" class="btn" data-act="f-pdf" data-id="${esc(id)}">Exportar PDF</button>`+(f.eventId&&ST.agenda[f.eventId]?`<button type="button" class="btn" data-act="ev-open" data-id="${esc(f.eventId)}">Ver agendamento</button>`:"");
+  openModal("Ficha "+fichaNo(f.no),body,{left,extra});
+}
+
+/* --- exportação (CSV e PDF) --- */
+async function saveFile(name,data){
+  let d=null; try{ d=(window.claude&&claude.use)?await claude.use("downloads"):null; }catch(e){ d=null; }
+  if(d){ try{ await d.save({filename:name,data}); toast("Arquivo pronto: "+name); }catch(e){ if(!(e&&e.code==="declined")) toast("Não foi possível salvar o arquivo."); } return; }
+  const blob=data instanceof Blob?data:new Blob([data],{type:name.endsWith(".pdf")?"application/pdf":name.endsWith(".csv")?"text/csv;charset=utf-8":"application/octet-stream"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+const csvCell=(v)=>{ let t=String(v==null?"":v); if(/^[=+\-@\t\r]/.test(t) && !/^-?\d+([.,]\d+)?$/.test(t)) t="'"+t; return '"'+t.replace(/"/g,'""')+'"'; };
+const csvOut=(rows)=>"﻿"+rows.map(r=>r.map(csvCell).join(";")).join("\r\n")+"\r\n";
+const money=(v)=>(Number(v)||0).toFixed(2).replace(".",",");
+const fname=(f,ext)=>"Ficha_"+fichaNo(f.no)+"_"+f.date+"."+ext;
+const dsum=(f,item)=>fichaDesp(f).filter(d=>d.item===item).reduce((a,d)=>a+(Number(d.val)||0),0);
+function csvFicha(id){
+  const f=ST.fichas[id]; if(!f) return; const v=f.veic||{};
+  const obs=f.obs!=null&&f.obs!==""?f.obs:[f.pauta,f.pend,f.prox].filter(Boolean).join("\n\n");
+  const rows=[["Ficha de apropriação",fichaNo(f.no)],["Situação",f.status==="rascunho"?"Rascunho":"Finalizada"],["Descrição resumida",f.resumo||""],["Categoria",f.tipo||""],["Modalidade",f.mod||""],["Ordem de serviço",f.os||""],["Descrição do serviço",f.osdesc||""],["Executor",f.consultor||""],["Cód. executor",f.execcod||""],["Gestão › Etapa",gsLabel(f.gid,f.sid)],["Participantes",[].concat(f.part||[],f.partx?[f.partx]:[]).join(", ")],["Atividades trabalhadas",actNames(f).join(" | ")],[],
+    ["HORÁRIOS"],["Data início","Hora início","Data término","Hora término","Total (h)"]];
+  fichaH(f).forEach(h=>rows.push([fmtD(h.di),h.hi,fmtD(h.df||h.di),h.hf,dec(lineMin(h))]));
+  rows.push(["","","","Total (h)",dec(fichaMin(f))],[],["DESPESAS"],["Item","Descrição","Valor total (R$)","Data","Responsável"]);
+  fichaDesp(f).forEach(d=>rows.push([d.item,d.desc||"",money(d.val),d.date?fmtD(d.date):"",d.resp||""]));
+  rows.push(["","","Total (R$)",money(despTotal(f))],[],["OBSERVAÇÕES"],[obs],[],["INFORMAÇÕES COMPLEMENTARES"],["Veículo",v.cod||""],["Descrição do veículo",v.desc||""],["Transportadora",v.transp||""]);
+  saveFile(fname(f,"csv"),csvOut(rows));
+}
+function csvFichas(){
+  const head=["Ficha","Data","Início","Término","Horas","Executor","Cód. executor","Categoria","Modalidade","Gestão › Etapa","Ordem de serviço","Descrição resumida","Observações","Translado (R$)","Almoço (R$)","Outras despesas (R$)","Total despesas (R$)","Veículo","Descrição do veículo","Transportadora","Situação","Lançada por"];
+  const rows=[head].concat(M.fichas.slice().sort((a,b)=>(a.no||0)-(b.no||0)).map(f=>{ const v=f.veic||{}; const obs=f.obs!=null&&f.obs!==""?f.obs:[f.pauta,f.pend,f.prox].filter(Boolean).join(" / ");
+    const tr=dsum(f,"Translado"), al=dsum(f,"Almoço"), tt=despTotal(f); const h=fichaH(f);
+    return [fichaNo(f.no),fmtD(f.date),h[0].hi||"",(h[h.length-1].hf||""),dec(fichaMin(f)),f.consultor||"",f.execcod||"",f.tipo||"",f.mod||"",gsLabel(f.gid,f.sid),f.os||"",f.resumo||"",obs,money(tr),money(al),money(tt-tr-al),money(tt),v.cod||"",v.desc||"",v.transp||"",f.status==="rascunho"?"Rascunho":"Finalizada",nameOf(f.by)]; }));
+  saveFile("Fichas_de_atendimento.csv",csvOut(rows));
+}
+async function pdfFicha(id){
+  const f=ST.fichas[id]; if(!f) return;
+  if(!(window.jspdf&&window.jspdf.jsPDF)){ toast("O gerador de PDF não carregou. Verifique a conexão e tente de novo."); return; }
+  const doc=new window.jspdf.jsPDF({unit:"pt",format:"a4"}); const W=595, MG=40, CW=W-2*MG; let y=0;
+  const NAVY=[20,50,78], MUT=[86,101,116], LINE=[219,226,234], BG=[238,242,246];
+  const need=(h)=>{ if(y+h>800){ doc.addPage(); y=48; } };
+  const txt=(t,x,yy,o={})=>{ doc.setFont("helvetica",o.b?"bold":"normal"); doc.setFontSize(o.s||10); doc.setTextColor(...(o.c||[20,50,78])); doc.text(String(t),x,yy,o.a?{align:o.a}:undefined); };
+  const para=(t,s=10)=>{ doc.setFont("helvetica","normal"); doc.setFontSize(s); const lines=doc.splitTextToSize(String(t||"—"),CW); lines.forEach(l=>{ need(14); txt(l,MG,y,{s}); y+=13; }); };
+  const h2=(t)=>{ need(34); y+=8; txt(t,MG,y,{b:1,s:11}); y+=5; doc.setDrawColor(...NAVY); doc.setLineWidth(1); doc.line(MG,y,W-MG,y); y+=14; };
+  const kv=(pairs)=>{ const cw=CW/2; for(let i=0;i<pairs.length;i+=2){ let mx=1; const ls=[0,1].map(j=>{ const p=pairs[i+j]; if(!p) return null; doc.setFont("helvetica","bold"); doc.setFontSize(10); const l=doc.splitTextToSize(String(p[1]||"—"),cw-12); mx=Math.max(mx,l.length); return l; }); need(18+13*mx); [0,1].forEach(j=>{ const p=pairs[i+j]; if(!p) return; const x=MG+j*cw; txt(p[0],x,y,{s:8,c:MUT}); ls[j].forEach((t,k)=>txt(t,x,y+12+k*12,{b:1,s:10})); }); y+=18+13*mx; } };
+  const table=(cols,rows,tot)=>{ // cols: [{t,w,r}] w em fração
+    const xs=[]; let x=MG; cols.forEach(c=>{ xs.push(x); x+=c.w*CW; });
+    const row=(cells,o={})=>{ doc.setFont("helvetica",o.b?"bold":"normal"); doc.setFontSize(9); const ls=cells.map((c,i)=>doc.splitTextToSize(String(c==null?"":c),cols[i].w*CW-8)); const hh=Math.max(...ls.map(l=>l.length))*11+7; need(hh);
+      if(o.bg){ doc.setFillColor(...o.bg); doc.rect(MG,y-9,CW,hh,"F"); }
+      ls.forEach((l,i)=>{ l.forEach((t,k)=>txt(t,cols[i].r?xs[i]+cols[i].w*CW-4:xs[i]+4,y+k*11,{s:9,b:o.b,c:o.c||NAVY,a:cols[i].r?"right":undefined})); });
+      y+=hh; doc.setDrawColor(...LINE); doc.setLineWidth(.5); doc.line(MG,y-8,W-MG,y-8); };
+    row(cols.map(c=>c.t),{b:1,bg:BG}); rows.forEach(r=>row(r)); if(tot) row(tot,{b:1}); };
+  // faixa
+  doc.setFillColor(...NAVY); doc.rect(0,0,W,70,"F");
+  txt("NW Software",MG,32,{b:1,s:13,c:[255,255,255]}); txt("Ficha de Apropriação "+fichaNo(f.no),MG,54,{s:11,c:[255,255,255]});
+  txt(f.status==="rascunho"?"RASCUNHO":"FINALIZADA",W-MG,54,{b:1,s:9,c:[255,255,255],a:"right"});
+  y=96; const v=f.veic||{};
+  const obs=f.obs!=null&&f.obs!==""?f.obs:[f.pauta,f.pend,f.prox].filter(Boolean).join("\n\n");
+  kv([["Cliente",clientName],["Descrição resumida",f.resumo||f.tipo],["Categoria",(f.tipo||"")+" · "+(f.mod||"")],["Ordem de serviço",(f.os||"")+(f.osdesc?" - "+f.osdesc:"")],["Executor",(f.consultor||"")+(f.execcod?" ("+f.execcod+")":"")],["Gestão › Etapa",gsLabel(f.gid,f.sid)]]);
+  h2("1 - Horários");
+  table([{t:"Data início",w:.26},{t:"Hora início",w:.2},{t:"Data término",w:.26},{t:"Hora término",w:.2},{t:"Total",w:.08,r:1}],fichaH(f).map(h=>[fmtD(h.di),h.hi,fmtD(h.df||h.di),h.hf,hm(lineMin(h))]),["Total","","","",hm(fichaMin(f))]);
+  h2("2 - Despesas");
+  if(fichaDesp(f).length) table([{t:"Item",w:.2},{t:"Descrição",w:.32},{t:"Data",w:.16},{t:"Responsável",w:.16},{t:"Valor",w:.16,r:1}],fichaDesp(f).map(d=>[d.item,d.desc||"",d.date?fmtD(d.date):"",d.resp||"",brl(d.val)]),["Total","","","",brl(despTotal(f))]); else para("Sem despesas.");
+  h2("3 - Observações"); para(obs);
+  const its=actNames(f); if(its.length){ h2("Atividades trabalhadas"); its.forEach(i=>para("• "+i)); }
+  const pp=[].concat(f.part||[],f.partx?[f.partx]:[]).join(", "); if(pp){ h2("Participantes"); para(pp); }
+  h2("4 - Informações complementares"); kv([["Veículo",(v.cod||"")+(v.desc?" - "+v.desc:"")],["Transportadora",v.transp||""]]);
+  const n=doc.getNumberOfPages(); for(let i=1;i<=n;i++){ doc.setPage(i); txt("Ficha "+fichaNo(f.no)+" · emitida em "+new Date().toLocaleDateString("pt-BR")+" · página "+i+"/"+n,W/2,826,{s:8,c:MUT,a:"center"}); }
+  saveFile(fname(f,"pdf"),doc.output("arraybuffer"));
+}
+
+/* --- personalização do cronograma --- */
+function nameForm(title,label,val,onSave,extraHtml,onOpen){
+  openModal(title,F.txt("name",label,val,"required")+(extraHtml||""),{submit:"Salvar",onOpen,onSubmit:async(fd)=>{ const v=(fd.get("name")||"").trim(); if(!v){ toast("Informe um nome."); return; } if(await guard(()=>onSave(v,fd))) closeModal(); }});
+}
+const nextOrd=(c)=>Math.max(0,...Object.values(ST[c]).map(x=>x.ord||0))+1;
+function areaChecks(vals){ return F.chk("areas","Key users responsáveis",AL.map(a=>[a.k,a.label+" – "+a.short]),vals); }
+function actGestNew(){ nameForm("Nova gestão","Nome da gestão","",async(v)=>{ const id=newId(); open.add(id); await put("plan_g",id,{name:v,ord:nextOrd("plan_g"),color:COLORS[Object.keys(ST.plan_g).length%COLORS.length]}); }); }
+function actGestRen(gid){ const G=M.by[gid]; nameForm("Renomear gestão","Nome da gestão",G.g.name,async(v)=>{ await putCfg({rename:Object.assign({},ST.cfg.rename,{[gid]:v})}); }); }
+async function actGestMove(gid,dir){ const ids=M.gs.map(G=>G.g.id), i=ids.indexOf(gid), j=i+dir; if(j<0||j>=ids.length) return; [ids[i],ids[j]]=[ids[j],ids[i]]; await guard(()=>putCfg({gorder:ids})); }
+async function actScope(gid){ const o=offSet(); o.has(gid)?o.delete(gid):o.add(gid); await guard(()=>putCfg({off:[...o]}),"Somente editores podem alterar o escopo."); }
+function actGestDel(gid){
+  const G=M.by[gid]; openModal("Excluir gestão","<p>Excluir a gestão <b>"+esc(G.g.name)+"</b> com todas as etapas e atividades criadas nela? O progresso dessas atividades também sai do cálculo.</p>",{submit:"Excluir gestão",onSubmit:async()=>{
+    const ok=await guard(async()=>{ for(const X of G.secs){ for(const it of X.s.items){ await del("plan_i",it.id); await del("progress",it.id); } await del("plan_s",X.s.id); } await del("plan_g",gid); });
+    if(ok){ closeModal(); toast("Gestão excluída"); } }});
+}
+function actSecNew(gid){ nameForm("Nova etapa","Nome da etapa","",async(v,fd)=>{ const id=newId(); open.add(gid); await put("plan_s",id,{g:gid,name:v,areas:fd.getAll("areas"),ord:nextOrd("plan_s")}); },areaChecks([])); }
+function actSecRen(gid,sid){ const X=M.by[gid].secs.find(x=>x.s.id===sid); nameForm("Editar etapa","Nome da etapa",X.s.name,async(v,fd)=>{ await putCfg({rename:Object.assign({},ST.cfg.rename,{[sid]:v}),areas:Object.assign({},ST.cfg.areas,{[sid]:fd.getAll("areas")})}); },areaChecks(X.s.areas)); }
+function actSecDel(gid,sid){
+  const X=M.by[gid].secs.find(x=>x.s.id===sid);
+  openModal("Remover etapa","<p>Remover a etapa <b>"+esc(X.s.name)+"</b> do cronograma deste cliente? "+(X.s.custom?"Ela foi criada para este cliente e será excluída.":"Você pode restaurá-la depois em “Restaurar removidas”.")+"</p>",{submit:"Remover etapa",onSubmit:async()=>{
+    const ok=await guard(async()=>{ if(X.s.custom){ for(const it of X.s.items){ await del("plan_i",it.id); await del("progress",it.id); } await del("plan_s",sid); } else await putCfg({hiddenSec:[...(ST.cfg.hiddenSec||[]),sid]}); });
+    if(ok){ closeModal(); toast("Etapa removida"); } }});
+}
+function actItNew(gid,sid){ nameForm("Nova atividade","Descrição da atividade","",async(v)=>{ await put("plan_i",newId(),{g:gid,s:sid,t:v,ord:nextOrd("plan_i")}); }); }
+function actItRen(id){ let cur=""; for(const G of M.gs) for(const X of G.secs) for(const it of X.s.items) if(it.id===id) cur=it.t;
+  nameForm("Editar atividade","Descrição da atividade",cur,async(v)=>{ if(ST.plan_i[id]) await put("plan_i",id,Object.assign({},ST.plan_i[id],{t:v})); else await putCfg({rename:Object.assign({},ST.cfg.rename,{[id]:v})}); }); }
+async function actItDel(id,custom){ if(custom){ await guard(async()=>{ await del("plan_i",id); await del("progress",id); }); } else await guard(()=>putCfg({hidden:[...(ST.cfg.hidden||[]),id]})); toast("Atividade removida"); }
+function actRestore(){
+  const hid=ST.cfg.hidden||[], hs=ST.cfg.hiddenSec||[];
+  const its=[]; for(const g of BASE) for(const s of g.sections) for(const it of s.items) if(hid.includes(it.id)) its.push({id:it.id,t:it.t,w:g.name+" › "+s.name});
+  const secs=[]; for(const g of BASE) for(const s of g.sections) if(hs.includes(s.id)) secs.push({id:s.id,t:s.name,w:g.name});
+  const row=(x,k)=>`<div class="evr" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)"><div style="min-width:0;overflow-wrap:anywhere">${esc(x.t)}<div class="hint">${esc(x.w)}</div></div><button type="button" class="btn sm" data-act="${k}" data-id="${esc(x.id)}">Restaurar</button></div>`;
+  openModal("Restaurar removidas",(secs.length?`<div class="sub-h">Etapas</div>`+secs.map(x=>row(x,"r-sec")).join(""):"")+(its.length?`<div class="sub-h">Atividades</div>`+its.map(x=>row(x,"r-it")).join(""):"")+((!secs.length&&!its.length)?`<div class="hint">Nada removido.</div>`:""),{});
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener("input",(e)=>{ const k=e.target.dataset&&e.target.dataset.draft; if(k) drafts[k]=e.target.value; });
+document.addEventListener("click",async(e)=>{
+  const b=e.target.closest("[data-act]"); if(!b) return;
+  const a=b.dataset.act, d=b.dataset;
+  switch(a){
+    case "tab": setTab(d.t); break;
+    case "m-close": closeModal(); break;
+    case "cycle": { if(!canWrite) break; const cur=pg(d.id).s||"todo"; await setStatus(d.id,{todo:"doing",doing:"done",done:"todo"}[cur]); const nb=document.querySelector('[data-id="'+d.id+'"]'); if(nb) nb.focus(); break; }
+    case "toggle": { open.has(d.g)?open.delete(d.g):open.add(d.g); render(); const nb=document.querySelector('[data-act="toggle"][data-g="'+d.g+'"]'); if(nb) nb.focus(); break; }
+    case "filter": filter=d.f; if(filter!=="all") M.gs.forEach(G=>open.add(G.g.id)); render(); break;
+    case "expand": M.gs.forEach(G=>open.add(G.g.id)); render(); break;
+    case "collapse": open.clear(); render(); break;
+    case "goto": setTab("cronograma"); open.add(d.g); render(); { const el=document.getElementById("sec-"+d.s); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); } break;
+    case "copy": try{ await navigator.clipboard.writeText(d.v); toast("Copiado"); }catch(err){ toast("Selecione o e-mail e copie com Ctrl+C"); } break;
+    case "edit": editing=!editing; if(editing) M.gs.forEach(G=>open.add(G.g.id)); render(); break;
+    case "note-toggle": { openC.has(d.s)?openC.delete(d.s):openC.add(d.s); render(); const ta=document.querySelector('textarea[data-draft="'+d.s+'"]'); if(ta) ta.focus(); break; }
+    case "note-add": { const ta=document.querySelector('textarea[data-draft="'+d.s+'"]'); const text=ta?ta.value.trim():""; if(!text){ toast("Escreva o comentário antes de publicar."); break; }
+      if(await guard(()=>put("notas",newId(),{s:d.s,text,by:uid,at:new Date().toISOString()}),"Sem permissão para comentar. Peça acesso de colaborador ao consultor NW.")){ drafts[d.s]=""; render(); const nt=document.querySelector('textarea[data-draft="'+d.s+'"]'); if(nt) nt.focus(); toast("Comentário publicado"); } break; }
+    case "note-del": await guard(()=>del("notas",d.id)); break;
+    case "u-edit": openPersonForm(d.c||null); break;
+    case "u-area": openAreaEdit(d.k); break;
+    case "u-all": document.querySelectorAll('#mf input[name="areas"]').forEach(x=>x.checked=true); break;
+    case "u-none": document.querySelectorAll('#mf input[name="areas"]').forEach(x=>x.checked=false); break;
+    case "u-del": if(!b.dataset.sure){ b.dataset.sure="1"; b.textContent="Confirmar remoção"; } else { if(await guard(()=>removePerson(d.c))){ closeModal(); toast("Usuário removido"); } } break;
+    case "u-delarea": if(!b.dataset.sure){ b.dataset.sure="1"; b.textContent="Confirmar remoção"; } else { if(await guard(()=>removeArea(d.k))){ closeModal(); toast("Área removida"); } } break;
+    case "u-restore": await guard(async()=>{ for(const [id,o] of Object.entries(ST.equipe)) if(o.del) await put("equipe",id,Object.assign({},o,{del:false})); }); break;
+    case "scope": actScope(d.g); break;
+    case "unlock": { const u=new Set(ST.cfg.unlocked||[]); u.has(d.g)?u.delete(d.g):u.add(d.g); await guard(()=>putCfg({unlocked:[...u]}),"Somente editores podem liberar uma gestão."); if(!u.has(d.g)) toast("Gestão bloqueada novamente"); else toast("Gestão liberada"); break; }
+    case "g-new": actGestNew(); break;
+    case "g-ren": actGestRen(d.g); break;
+    case "g-up": actGestMove(d.g,-1); break;
+    case "g-down": actGestMove(d.g,1); break;
+    case "g-del": actGestDel(d.g); break;
+    case "s-new": actSecNew(d.g); break;
+    case "s-ren": actSecRen(d.g,d.s); break;
+    case "s-del": actSecDel(d.g,d.s); break;
+    case "i-new": actItNew(d.g,d.s); break;
+    case "i-ren": actItRen(d.id); break;
+    case "i-del": actItDel(d.id,d.c==="1"); break;
+    case "restore": actRestore(); break;
+    case "r-it": await guard(()=>putCfg({hidden:(ST.cfg.hidden||[]).filter(x=>x!==d.id)})); closeModal(); if((ST.cfg.hidden||[]).length+(ST.cfg.hiddenSec||[]).length) actRestore(); break;
+    case "r-sec": await guard(()=>putCfg({hiddenSec:(ST.cfg.hiddenSec||[]).filter(x=>x!==d.id)})); closeModal(); if((ST.cfg.hidden||[]).length+(ST.cfg.hiddenSec||[]).length) actRestore(); break;
+    case "cprev": cal.m--; if(cal.m<0){ cal.m=11; cal.y--; } render(); break;
+    case "cnext": cal.m++; if(cal.m>11){ cal.m=0; cal.y++; } render(); break;
+    case "ctoday": { const t=new Date(); cal.y=t.getFullYear(); cal.m=t.getMonth(); cal.day=ds(t); render(); break; }
+    case "cview": cal.view=d.v; if(d.goto) setTab(d.goto); render(); break;
+    case "day": cal.day=(cal.day===d.d?null:d.d); render(); break;
+    case "ev-new": openEvForm(null,d.d); break;
+    case "ev-open": openEvView(d.id); break;
+    case "ev-edit": openEvForm(M.agenda.find(x=>x.id===d.id)); break;
+    case "ev-ficha": openFichaForm(null,M.agenda.find(x=>x.id===d.id)); break;
+    case "ev-cancel": { const ev=ST.agenda[d.id]; if(await guard(()=>put("agenda",d.id,Object.assign({},ev,{status:"cancelado"})))){ closeModal(); toast("Agendamento cancelado"); } break; }
+    case "ev-del": if(!b.dataset.sure){ b.dataset.sure="1"; b.textContent="Confirmar exclusão"; } else { if(await guard(()=>del("agenda",d.id))){ closeModal(); toast("Agendamento excluído"); } } break;
+    case "f-new": openFichaForm(null,null); break;
+    case "f-open": openFichaView(d.id); break;
+    case "f-csv": csvFicha(d.id); break;
+    case "f-pdf": pdfFicha(d.id); break;
+    case "f-csv-all": csvFichas(); break;
+    case "f-edit": openFichaForm(Object.assign({id:d.id},ST.fichas[d.id])); break;
+    case "f-del": if(!b.dataset.sure){ b.dataset.sure="1"; b.textContent="Confirmar exclusão"; } else { const f=ST.fichas[d.id]; if(await guard(async()=>{ await del("fichas",d.id); if(f&&f.eventId&&ST.agenda[f.eventId]) await put("agenda",f.eventId,Object.assign({},ST.agenda[f.eventId],{status:"agendado",fichaId:null})); })){ closeModal(); toast("Ficha excluída"); } } break;
+  }
+});
+
+/* ---------- dados compartilhados ---------- */
+async function resolveNames(){
+  if(!user) return;
+  const ids=new Set(); Object.values(ST.progress).forEach(p=>p.by&&ids.add(p.by)); Object.values(ST.fichas).forEach(f=>f.by&&ids.add(f.by)); Object.values(ST.notas).forEach(n=>n.by&&ids.add(n.by)); Object.values(ST.arquivos||{}).concat(Object.values(ST.arquivos_equipe||{})).forEach(n=>n.by&&ids.add(n.by));
+  const need=[...ids].filter(i=>!names[i]); if(!need.length) return;
+  try{ const ps=await user.profiles(need); let ch=false; for(const i of need){ if(ps[i]){ names[i]=ps[i]; ch=true; } } if(ch) render(); }catch(e){}
+}
+async function boot(){
+  if(MODE==="api") return bootApi();
+  const t0=(location.hash||"").slice(1); if(TABS.some(x=>x[0]===t0)) tab=t0;
+  render();
+  try{ user=await claude.use("user"); }catch(e){ user=null; }
+  try{ db=await claude.use("db"); }catch(e){ db=null; }
+  if(user){ try{ uid=await user.id(); }catch(e){} try{ isAdmin=!!(await user.canEdit()); }catch(e){} try{ const cw=await user.can("data.write"); canWrite=(cw===null)?true:!!cw; }catch(e){} try{ const me=await user.me(); myName=me&&me.name||""; if(uid==null&&me) uid=me.id; }catch(e){} }
+  if(!db){ link="local"; isAdmin=true; render(); return; }
+  render();
+  const timer=setTimeout(()=>{ if(link==="connecting"){ link="slow"; rFoot(); } },10000);
+  const bad=()=>{ link="slow"; clearTimeout(timer); rFoot(); };
+  for(const c of COLS){
+    db.collection(c).onSnapshot((snap)=>{
+      const n={}; snap.docs.forEach(d=>{ const v=d.data(); if(!v) return; if(c==="progress"&&!(v.s==="doing"||v.s==="done")) return; n[d.id]=v; });
+      ST[c]=n; if(!snap.metadata.fromCache){ link="live"; clearTimeout(timer); } render(); if(c==="progress"||c==="fichas"||c==="notas"||c==="arquivos"||c==="arquivos_equipe") resolveNames();
+    },c==="arquivos_equipe"?()=>{}:bad);
+  }
+  db.doc("plan/cfg").onSnapshot((snap)=>{ ST.cfg=snap.exists?(snap.data()||{}):{}; render(); },()=>{});
+}
+/* ====================== MODO SUPABASE (login, usuários, dados e arquivos no Supabase) ====================== */
+const CFG=window.NW_CONFIG||{};
+const SB_READY=!!(window.supabase&&CFG.url&&CFG.key&&/^(https:\/\/[a-z0-9-]+\.supabase\.(co|in)|http:\/\/localhost(:\d+)?)\/?$/i.test(CFG.url)&&!/COLE/i.test(CFG.key));
+let SB=null; if(SB_READY) SB=window.supabase.createClient(CFG.url.replace(/\/$/,""),CFG.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const MSGS=[["Invalid login credentials","E-mail ou senha incorretos."],["User already registered","Já existe um usuário com este e-mail."],["Email not confirmed","E-mail ainda não confirmado. No Supabase, desative “Confirm email” (veja o passo a passo)."],["Password should be at least","A senha é curta demais."],["same password","A nova senha precisa ser diferente da atual."],["rate limit","Muitas tentativas. Aguarde alguns minutos e tente de novo."],["Signups not allowed","Cadastro desativado no Supabase. Ative “Allow new users to sign up” (veja o passo a passo)."],["row-level security","Sem permissão para esta ação."],["JWT expired","Sua sessão expirou. Entre novamente."],["Failed to fetch","Sem conexão com o servidor."],["NetworkError","Sem conexão com o servidor."]];
+function er(e){ const raw=(e&&(e.message||e.error_description))||String(e); let m=raw; for(const [k,v] of MSGS){ if(raw.toLowerCase().includes(k.toLowerCase())){ m=v; break; } }
+  const x=new Error(m); x.api=true; x.status=(e&&Number(e.status))||(/JWT expired|PGRST30[0-9]/.test(raw)?401:0); return x; }
+const Q=async(p)=>{ const r=await p; if(r&&r.error) throw er(r.error); return r.data; };
+const upd=async(table,col,val,patch)=>{ const d=await Q(SB.from(table).update(patch).eq(col,val).select()); if(!d||!d.length) throw er({message:"row-level security"}); return d[0]; };
+
+let ME=null, CLIENTS=[], CID=null, chan=null, adminOpen=false, adminTab="usuarios", USERS=[], UCL=[], RECOVERY=/type=recovery/.test(location.hash);
+const ROLE={cliente:"Cliente",consultor:"Consultor",admin:"Administrador"};
+const store=(k,v)=>{ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){ return null; } };
+const mapP=(p)=>({id:p.id,email:p.email,name:p.name,role:p.role,clientId:p.client_id,allClients:p.all_clients,active:p.active,mustChange:p.must_change,lastLoginAt:p.last_login_at});
+const strongPw=(s)=>s.length>=10&&/[A-Za-z]/.test(s)&&/\d/.test(s);
+const genPw=()=>{ const a="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"; const r=crypto.getRandomValues(new Uint32Array(12)); return Array.from(r,x=>a[x%a.length]).join("")+"7"; };
+async function fetchAll(mk){ let out=[],from=0; for(;;){ const d=await Q(mk().range(from,from+999)); out=out.concat(d); if(d.length<1000) break; from+=1000; } return out; }
+
+/* --- camada de dados: mesma interface que a tela já usa (doc/collection/onSnapshot) --- */
+function makeDb(cid){
+  const cache={}; ["progress","fichas","agenda","plan_g","plan_s","plan_i","notas","equipe","plan"].forEach(c=>cache[c]={});
+  const colL={}, cfgL=[]; let loaded=false;
+  const snapOf=(c)=>({docs:Object.entries(cache[c]).map(([id,v])=>({id,data:()=>v})),metadata:{fromCache:false}});
+  const cfgSnap=()=>({exists:!!cache.plan.cfg,data:()=>cache.plan.cfg||{}});
+  const notify=(c)=>{ if(!loaded) return; if(c==="plan"){ cfgL.forEach(f=>f(cfgSnap())); } else (colL[c]||[]).forEach(f=>f(snapOf(c))); };
+  async function load(){
+    const rows=await fetchAll(()=>SB.from("docs").select("collection,id,data").eq("client_id",cid).order("collection").order("id"));
+    for(const c of Object.keys(cache)) cache[c]={};
+    rows.forEach(d=>{ if(cache[d.collection]) cache[d.collection][d.id]=d.data; });
+    loaded=true; Object.keys(cache).forEach(notify);
+  }
+  function stream(){
+    if(chan) SB.removeChannel(chan); let first=true;
+    chan=SB.channel("proj-"+cid)
+      .on("postgres_changes",{event:"*",schema:"public",table:"docs",filter:"client_id=eq."+cid},(p)=>{
+        if(p.eventType==="DELETE"){ const o=p.old||{}; if(o.collection&&cache[o.collection]&&(o.client_id===undefined||o.client_id===cid)){ delete cache[o.collection][o.id]; notify(o.collection); } return; }
+        const n=p.new; if(n&&cache[n.collection]){ cache[n.collection][n.id]=n.data; notify(n.collection); } })
+      .on("postgres_changes",{event:"*",schema:"public",table:"files",filter:"client_id=eq."+cid},()=>{ loadFiles(); })
+      .subscribe((s)=>{ if(s==="SUBSCRIBED"){ if(!first) load().catch(()=>{}); first=false; link="live"; rFoot(); } else if(s==="CHANNEL_ERROR"||s==="TIMED_OUT"||s==="CLOSED"){ link="slow"; rFoot(); } });
+  }
+  return {
+    load, stream,
+    collection:(c)=>({onSnapshot:(f)=>{ (colL[c]=colL[c]||[]).push(f); if(loaded) f(snapOf(c)); }}),
+    doc:(path)=>{ const [c,id]=path.split("/"); return {
+      set:async(data)=>{ await Q(SB.from("docs").upsert({client_id:cid,collection:c,id,data},{onConflict:"client_id,collection,id"})); cache[c][id]=data; notify(c); },
+      delete:async()=>{ await Q(SB.from("docs").delete().eq("client_id",cid).eq("collection",c).eq("id",id)); delete cache[c][id]; notify(c); },
+      onSnapshot:(f)=>{ if(c==="plan"&&id==="cfg"){ cfgL.push(f); if(loaded) f(cfgSnap()); } } }; }
+  };
+}
+
+/* --- telas de acesso --- */
+function showAuth(html){ $(".tabs").hidden=true; $("main").hidden=true; $("#admin").hidden=true; $("#userbar").hidden=true; const a=$("#auth"); a.hidden=false; a.innerHTML=html; const i=a.querySelector("input"); if(i) i.focus(); }
+function renderSetup(){
+  showAuth(`<div class="card"><h2>Falta ligar ao Supabase</h2><div class="hint">Abra o arquivo <b>config.js</b> deste site (no GitHub) e cole o <b>Project URL</b> e a chave <b>anon public</b> do seu projeto Supabase. O passo a passo explica onde achar cada um.</div></div>`);
+}
+function renderLogin(msg){
+  showAuth(`<div class="card"><h2>Entrar</h2><div class="hint">Acesso à plataforma de implantação NW Software.</div>
+    <form id="lf" style="display:flex;flex-direction:column;gap:12px"><div class="f"><label for="l-e">E-mail</label><input id="l-e" type="email" name="email" autocomplete="username" required></div>
+    <div class="f"><label for="l-p">Senha</label><input id="l-p" type="password" name="password" autocomplete="current-password" required></div>
+    <div class="err" id="lerr" role="alert">${esc(msg||"")}</div><button class="btn pri" type="submit">Entrar</button>
+    <button class="link" type="button" id="l-forgot" style="align-self:flex-start">Esqueci minha senha</button></form>
+    <div class="hint">Não tem acesso? Peça ao administrador da NW para criar o seu usuário.</div></div>`);
+  $("#lf").addEventListener("submit",async(e)=>{ e.preventDefault(); const fd=new FormData(e.target); $("#lerr").textContent="";
+    try{ const d=await Q(SB.auth.signInWithPassword({email:String(fd.get("email")).trim(),password:fd.get("password")})); await afterLogin(d.user.id,true); }catch(x){ $("#lerr").textContent=x.message; } });
+  $("#l-forgot").onclick=async()=>{ const em=$("#l-e").value.trim(); const e=$("#lerr"); if(!em){ e.textContent="Digite seu e-mail acima e clique de novo."; return; }
+    try{ await Q(SB.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname})); e.style.color="inherit"; e.textContent="Se o e-mail estiver cadastrado, enviamos um link para criar uma nova senha."; }catch(x){ e.textContent=x.message; } };
+}
+function renderChange(forced,recovery){
+  showAuth(`<div class="card"><h2>${forced?"Defina sua nova senha":"Alterar senha"}</h2><div class="hint">${forced?(recovery?"Escolha a sua nova senha.":"Por segurança, troque a senha temporária no primeiro acesso."):"Escolha uma nova senha."} Use ao menos 10 caracteres, com letras e números.</div>
+    <form id="cf" style="display:flex;flex-direction:column;gap:12px">
+    <div class="f"><label for="c-n">Nova senha</label><input id="c-n" type="password" name="nw" autocomplete="new-password" required></div>
+    <div class="f"><label for="c-r">Repita a nova senha</label><input id="c-r" type="password" name="rp" autocomplete="new-password" required></div>
+    <div class="err" id="cerr" role="alert"></div><div class="row-gap"><button class="btn pri" type="submit">Salvar senha</button>${forced?`<button class="btn" type="button" id="c-out">Sair</button>`:`<button class="btn" type="button" id="c-back">Voltar</button>`}</div></form></div>`);
+  $("#cf").addEventListener("submit",async(e)=>{ e.preventDefault(); const fd=new FormData(e.target); const x=$("#cerr"); x.textContent="";
+    if(fd.get("nw")!==fd.get("rp")){ x.textContent="As senhas novas não conferem."; return; }
+    if(!strongPw(fd.get("nw"))){ x.textContent="Use ao menos 10 caracteres, com letras e números."; return; }
+    try{ await Q(SB.auth.updateUser({password:fd.get("nw")})); await Q(SB.rpc("clear_must_change")); RECOVERY=false; if(location.hash) history.replaceState(null,"",location.pathname);
+      const { data:s }=await SB.auth.getSession(); if(forced) await afterLogin(s.session.user.id,false); else { toast("Senha alterada"); enterApp(); } }catch(er2){ x.textContent=er2.message; } });
+  const o=$("#c-out"); if(o) o.onclick=logout; const b=$("#c-back"); if(b) b.onclick=()=>enterApp();
+}
+async function logout(){ try{ await SB.auth.signOut(); }catch(e){} location.reload(); }
+async function afterLogin(userId,fresh){
+  try{
+    const p=await Q(SB.from("profiles").select("*").eq("id",userId).maybeSingle());
+    if(!p){ showAuth(`<div class="card"><h2>Usuário sem perfil</h2><div class="hint">Peça ao administrador da NW para conferir o seu cadastro.</div><button class="btn" id="o">Sair</button></div>`); $("#o").onclick=logout; return; }
+    ME=mapP(p);
+    if(!ME.active){ showAuth(`<div class="card"><h2>Acesso ainda não liberado</h2><div class="hint">Seu usuário existe, mas o administrador da NW ainda não liberou o acesso. Fale com ele e tente de novo.</div><button class="btn" id="o">Sair</button></div>`); $("#o").onclick=logout; return; }
+    if(fresh) SB.rpc("touch_login").then(()=>{},()=>{});
+    if(ME.mustChange||RECOVERY) renderChange(true,RECOVERY); else enterApp();
+  }catch(e){ renderLogin(e.message); }
+}
+
+/* --- barra do usuário --- */
+function rUserbar(){
+  const u=$("#userbar"); u.hidden=false;
+  const sel=CLIENTS.length>1?`<select id="cli-sel" aria-label="Projeto">${CLIENTS.map(c=>`<option value="${c.id}" ${c.id===CID?"selected":""}>${esc(c.name)}</option>`).join("")}</select>`:"";
+  u.innerHTML=`<span class="who">${esc(ME.name)} · ${ROLE[ME.role]}</span>${sel}${ME.role==="admin"?`<button type="button" id="ub-adm">${adminOpen?"Voltar à implantação":"Administração"}</button>`:""}<button type="button" id="ub-pw">Alterar senha</button><button type="button" id="ub-out">Sair</button>`;
+  const s=$("#cli-sel"); if(s) s.onchange=()=>{ store("nw_client",s.value); location.reload(); };
+  const a=$("#ub-adm"); if(a) a.onclick=()=>{ adminOpen=!adminOpen; showMain(); };
+  $("#ub-pw").onclick=()=>renderChange(false); $("#ub-out").onclick=logout;
+}
+function showMain(){
+  $("#auth").hidden=true; rUserbar();
+  const noClient=!CID;
+  $("#admin").hidden=!(adminOpen||noClient); $(".tabs").hidden=adminOpen||noClient; $("main").hidden=adminOpen||noClient;
+  if(adminOpen||noClient) rAdmin();
+}
+
+/* --- entrada no app --- */
+async function enterApp(){
+  try{
+    CLIENTS=await Q(SB.from("clients").select("*").order("name"));
+    const saved=Number(store("nw_client")); CID=(CLIENTS.find(c=>c.id===saved)||CLIENTS.find(c=>c.active)||CLIENTS[0]||{}).id||null;
+    if(!CID){ if(ME.role!=="admin"){ showAuth(`<div class="card"><h2>Sem implantação disponível</h2><div class="hint">Seu usuário ainda não está vinculado a nenhum cliente. Fale com o administrador da NW.</div><button class="btn" id="o">Sair</button></div>`); $("#o").onclick=logout; return; } adminOpen=true; adminTab="clientes"; showMain(); return; }
+    const c=CLIENTS.find(x=>x.id===CID); clientName=c.name; SEED=/francisco/i.test(c.name);
+    $("#cname").textContent=c.name; document.title="Implantação "+c.name;
+    uid=ME.id; myName=ME.name; user=null; names={}; names[ME.id]={name:ME.name,role:ME.role};
+    (await Q(SB.rpc("project_people",{p_cid:CID}))||[]).forEach(p=>{ names[p.id]={name:p.name,role:p.role}; });
+    db=makeDb(CID); await db.load();
+    canWrite=(ME.role==="admin"||ME.role==="consultor")&&c.active; isAdmin=canWrite;
+    subscribeApi(); db.stream(); link="live"; showMain(); await loadFiles(); render();
+  }catch(e){ if(e.status===401) renderLogin("Sua sessão expirou. Entre novamente."); else { showAuth(`<div class="card"><h2>Não foi possível carregar</h2><div class="err">${esc(e.message)}</div><button class="btn" id="o">Tentar de novo</button></div>`); $("#o").onclick=()=>enterApp(); } }
+}
+let apiSubscribed=false;
+function subscribeApi(){
+  if(apiSubscribed) return; apiSubscribed=true;
+  for(const c of COLS.filter(x=>x!=="arquivos"&&x!=="arquivos_equipe")){ db.collection(c).onSnapshot((snap)=>{ const n={}; snap.docs.forEach(d=>{ const v=d.data(); if(!v) return; if(c==="progress"&&!(v.s==="doing"||v.s==="done")) return; n[d.id]=v; }); ST[c]=n; render(); }); }
+  db.doc("plan/cfg").onSnapshot((snap)=>{ ST.cfg=snap.exists?(snap.data()||{}):{}; render(); });
+}
+async function bootApi(){
+  $(".tabs").hidden=true; $("main").hidden=true;
+  if(!SB_READY){ renderSetup(); return; }
+  SB.auth.onAuthStateChange((ev)=>{ if(ev==="PASSWORD_RECOVERY"){ RECOVERY=true; setTimeout(()=>{ SB.auth.getSession().then(({data})=>{ if(data.session) afterLogin(data.session.user.id,false); }); },0); } else if(ev==="SIGNED_OUT"&&ME){ location.reload(); } });
+  const { data }=await SB.auth.getSession();
+  if(data.session) afterLogin(data.session.user.id,false); else if(!RECOVERY) renderLogin();
+}
+
+/* --- administração (somente admin) --- */
+async function loadAdminData(){
+  CLIENTS=await Q(SB.from("clients").select("*").order("name"));
+  USERS=(await Q(SB.from("profiles").select("*").order("name"))).map(mapP);
+  UCL=await Q(SB.from("user_clients").select("user_id,client_id"));
+  USERS.forEach(u=>{ u.clientIds=UCL.filter(x=>x.user_id===u.id).map(x=>x.client_id); });
+}
+async function rAdmin(){
+  const el=$("#admin");
+  const tabs=`<div class="seg"><button class="chip" aria-pressed="${adminTab==="usuarios"}" data-ad="tab-u">Usuários</button><button class="chip" aria-pressed="${adminTab==="clientes"}" data-ad="tab-c">Projetos</button></div>`;
+  if(ME.role!=="admin"){ el.innerHTML=""; return; }
+  el.innerHTML=`<div class="bar-tools"><h2 style="margin:0">Administração</h2>${tabs}</div><div id="ad-body" class="card tbl" style="padding:6px 8px"><div class="empty">Carregando…</div></div>`;
+  try{
+    await loadAdminData(); const cl=CLIENTS;
+    if(adminTab==="usuarios"){
+      const access=(u)=>u.role==="admin"?"Todos":u.role==="cliente"?esc((cl.find(c=>c.id===u.clientId)||{}).name||"—"):(u.allClients?"Todos os clientes":(u.clientIds.map(i=>esc((cl.find(c=>c.id===i)||{}).name||i)).join(", ")||"Nenhum"));
+      const rows=USERS.map(u=>`<tr><td><b>${esc(u.name)}</b><br><span class="hint">${esc(u.email)}</span></td><td>${ROLE[u.role]}</td><td>${access(u)}</td><td>${u.active?(u.mustChange?'<span class="badge doing">Aguardando 1º acesso</span>':'<span class="badge done">Ativo</span>'):'<span class="badge todo">Inativo / sem acesso</span>'}</td><td class="num">${u.lastLoginAt?fmt(u.lastLoginAt):"—"}</td><td><button class="btn sm" data-ad="u-edit" data-id="${u.id}">Editar</button> <button class="btn sm" data-ad="u-reset" data-id="${u.id}">Link de nova senha</button></td></tr>`).join("");
+      $("#ad-body").innerHTML=`<div class="bar-tools" style="padding:8px 8px 0"><span class="hint">Você cria e gerencia todos os acessos. <b>Cliente</b> só visualiza; <b>Consultor</b> visualiza e edita.</span><button class="btn pri" data-ad="u-new">+ Novo usuário</button></div><table style="min-width:760px"><thead><tr><th>Usuário</th><th>Perfil</th><th>Acesso</th><th>Situação</th><th>Último acesso</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+    } else {
+      const cons=(c)=>{ const n=USERS.filter(u=>u.active&&u.role==="consultor"&&(u.allClients||u.clientIds.includes(c.id))).map(u=>esc(u.name)); return n.length?n.join(", "):'<span class="hint">Nenhum consultor designado</span>'; };
+      const rows=cl.map(c=>`<tr><td><b>${esc(c.name)}</b>${c.company?`<br><span class="hint">${esc(c.company)}</span>`:""}</td><td>${cons(c)}</td><td>${c.active?'<span class="badge done">Em implantação</span>':'<span class="badge todo">Encerrado (somente leitura)</span>'}</td><td><button class="btn sm pri" data-ad="c-open" data-id="${c.id}">Abrir</button> <button class="btn sm" data-ad="c-edit" data-id="${c.id}">Editar</button></td></tr>`).join("");
+      $("#ad-body").innerHTML=`<div class="bar-tools" style="padding:8px 8px 0"><span class="hint">Cada projeto é uma implantação completa e isolada. O cliente vê só o dele; o consultor vê os projetos designados a ele.</span><button class="btn pri" data-ad="c-new">+ Novo projeto</button></div>${cl.length?`<table style="min-width:720px"><thead><tr><th>Projeto (cliente)</th><th>Consultores</th><th>Situação</th><th></th></tr></thead><tbody>${rows}</tbody></table>`:`<div class="empty">Nenhum projeto ainda. Crie o primeiro para começar.</div>`}`;
+    }
+  }catch(e){ $("#ad-body").innerHTML=`<div class="empty">${esc(e.message)}</div>`; }
+}
+function pwModal(title,intro,pw){
+  openModal(title,`<div>${intro}</div><div class="pwbox" id="pwb">${esc(pw)}</div><div class="hint">Esta senha aparece só agora. Envie ao usuário por um canal seguro; no primeiro acesso ele será obrigado a trocá-la.</div>`,{extra:`<button type="button" class="btn pri" id="pw-cp">Copiar senha</button>`,onOpen:()=>{ $("#pw-cp").onclick=async()=>{ try{ await navigator.clipboard.writeText(pw); toast("Senha copiada"); }catch(e){ const r=document.createRange(); r.selectNodeContents($("#pwb")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast("Selecione e copie a senha"); } }; }});
+}
+async function syncLinks(userId,want,cur){
+  const add=want.filter(i=>!cur.includes(i)), del=cur.filter(i=>!want.includes(i));
+  if(add.length) await Q(SB.from("user_clients").insert(add.map(client_id=>({user_id:userId,client_id}))));
+  for(const i of del) await Q(SB.from("user_clients").delete().eq("user_id",userId).eq("client_id",i));
+}
+function userForm(u){
+  const isNew=!u, cl=CLIENTS;
+  const body=F.txt("name","Nome",u?u.name:"","required")+(isNew?`<div class="f"><label for="f-email">E-mail (será o login)</label><input type="email" id="f-email" name="email" required></div>`:`<div class="f"><label>E-mail</label><div class="hint">${esc(u.email)}</div></div>`)+
+    F.sel("role","Perfil",[["cliente","Cliente – somente visualiza"],["consultor","Consultor – visualiza e edita"],["admin","Administrador – gerencia tudo"]],u?u.role:"cliente")+
+    `<div class="f" data-for="cliente"><label for="f-clientId">Empresa do cliente</label><select id="f-clientId" name="clientId">${cl.map(c=>`<option value="${c.id}" ${u&&u.clientId===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>`+
+    `<div class="f" data-for="consultor"><span class="lb">Clientes que este consultor atende</span><div class="chk" style="margin-bottom:6px"><label><input type="checkbox" name="allClients" ${u&&u.allClients?"checked":""}> Todos os clientes</label></div><div class="cl-list">${cl.map(c=>`<label><input type="checkbox" name="clientIds" value="${c.id}" ${u&&u.clientIds.includes(c.id)?"checked":""}> ${esc(c.name)}</label>`).join("")||'<span class="hint">Cadastre um cliente primeiro.</span>'}</div></div>`+
+    (isNew?`<div class="f"><label for="f-password">Senha temporária</label><input type="text" id="f-password" name="password" value="${genPw()}" required><div class="hint">Gerada automaticamente; pode trocar. Mínimo 10 caracteres, com letras e números.</div></div>`:
+      F.sel("active","Situação",[["1","Ativo"],["0","Inativo (sem acesso)"]],u.active?"1":"0"));
+  openModal(isNew?"Novo usuário":"Editar usuário",body,{submit:"Salvar",
+    onOpen:(fm)=>{ const sync=()=>{ const r=fm.elements.role.value; fm.querySelectorAll("[data-for]").forEach(x=>{ x.hidden=x.dataset.for!==r; }); }; fm.elements.role.addEventListener("change",sync); sync(); },
+    onSubmit:async(fd)=>{
+      const role=fd.get("role"); const patch={name:(fd.get("name")||"").trim(),role,client_id:null,all_clients:false};
+      if(role==="cliente"){ if(!fd.get("clientId")){ toast("Cadastre um cliente antes de criar usuários de cliente."); return; } patch.client_id=Number(fd.get("clientId")); }
+      if(role==="consultor") patch.all_clients=!!fd.get("allClients");
+      const links=role==="consultor"?fd.getAll("clientIds").map(Number):[];
+      try{
+        if(isNew){
+          const email=(fd.get("email")||"").trim().toLowerCase(), pw=(fd.get("password")||"").trim();
+          if(!strongPw(pw)){ toast("A senha precisa de 10+ caracteres, com letras e números."); return; }
+          const aux=window.supabase.createClient(CFG.url.replace(/\/$/,""),CFG.key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false,storageKey:"nw-aux"}});
+          const r=await aux.auth.signUp({email,password:pw,options:{data:{name:patch.name}}}); if(r.error) throw er(r.error);
+          const nu=r.data.user; if(!nu||!nu.id||(nu.identities&&!nu.identities.length)) throw er({message:"User already registered"});
+          if(!r.data.session) { toast("Usuário criado, mas o Supabase exige confirmação por e-mail. Desative “Confirm email” (veja o passo a passo)."); }
+          await upd("profiles","id",nu.id,Object.assign(patch,{active:true,must_change:true}));
+          await syncLinks(nu.id,links,[]);
+          closeModal(); await rAdmin(); pwModal("Usuário criado","Acesso de <b>"+esc(patch.name)+"</b> ("+esc(email)+") criado. Senha temporária:",pw);
+        } else {
+          patch.active=fd.get("active")==="1"; await upd("profiles","id",u.id,patch); await syncLinks(u.id,links,u.clientIds||[]);
+          closeModal(); toast("Usuário atualizado"); await rAdmin();
+        }
+      }catch(e){ toast(e.message); } }});
+}
+function projectForm(c){
+  const isNew=!c;
+  const consAll=USERS.filter(u=>u.active&&u.role==="consultor");
+  const has=(u)=>c&&(u.allClients||u.clientIds.includes(c.id));
+  const body=F.txt("name","Nome do cliente",c?c.name:"","required")+F.txt("company","Razão social / observação",c?c.company:"")+
+    (isNew?`<div class="f"><span class="lb">Gestões incluídas no escopo</span><div class="cl-list">${DATA.gestoes.map(g=>`<label><input type="checkbox" name="scope" value="${esc(g.id)}" checked> ${esc(g.name)}</label>`).join("")}</div><div class="hint">O cronograma completo é criado para o projeto. Desmarque o que o cliente não vai implantar (dá para mudar depois).</div></div>`:F.sel("active","Situação",[["1","Em implantação"],["0","Encerrado (somente leitura)"]],c.active?"1":"0"))+
+    `<div class="f"><span class="lb">Consultores responsáveis por este projeto</span><div class="cl-list">${consAll.map(u=>`<label><input type="checkbox" name="cons" value="${u.id}" ${has(u)?"checked":""} ${u.allClients?"disabled":""}> ${esc(u.name)}${u.allClients?' <span class="hint">(vê todos os projetos)</span>':""}</label>`).join("")||'<span class="hint">Nenhum consultor cadastrado ainda. Crie em Usuários.</span>'}</div></div>`;
+  openModal(isNew?"Novo projeto de implantação":"Editar projeto",body,{submit:isNew?"Criar projeto":"Salvar",
+    onSubmit:async(fd)=>{
+      const b={name:(fd.get("name")||"").trim(),company:(fd.get("company")||"").trim()}; const ids=fd.getAll("cons");
+      try{
+        if(isNew){ b.created_by=ME.id; const nc=await Q(SB.from("clients").insert(b).select().single());
+          if(ids.length) await Q(SB.from("user_clients").insert(ids.map(user_id=>({user_id,client_id:nc.id}))));
+          const off=DATA.gestoes.map(g=>g.id).filter(id=>!fd.getAll("scope").includes(id));
+          if(off.length) await Q(SB.from("docs").upsert({client_id:nc.id,collection:"plan",id:"cfg",data:{off}},{onConflict:"client_id,collection,id"}));
+          closeModal(); toast("Projeto criado"); await rAdmin();
+          openModal("Projeto criado",`<div><b>${esc(nc.name)}</b> já tem o cronograma completo. Próximos passos: cadastre os usuários do cliente (aba Usuários) e abra o projeto para lançar key users, agenda e fichas.</div>`,{extra:`<button type="button" class="btn pri" id="pj-open">Abrir projeto</button>`,onOpen:()=>{ $("#pj-open").onclick=()=>{ store("nw_client",String(nc.id)); location.reload(); }; }}); }
+        else { b.active=fd.get("active")==="1"; await upd("clients","id",c.id,b);
+          for(const u of USERS.filter(x=>x.active&&x.role==="consultor"&&!x.allClients)){ const cur=u.clientIds.includes(c.id), want=ids.includes(u.id); if(cur!==want) await syncLinks(u.id,want?[c.id]:[],want?[]:[c.id]); }
+          closeModal(); toast("Projeto salvo"); await rAdmin(); }
+      }catch(e){ toast(e.message); } }});
+}
+document.addEventListener("click",async(e)=>{
+  const b=e.target.closest("[data-ad]"); if(!b) return; const a=b.dataset.ad, id=b.dataset.id;
+  if(a==="tab-u"){ adminTab="usuarios"; rAdmin(); }
+  else if(a==="tab-c"){ adminTab="clientes"; rAdmin(); }
+  else if(a==="u-new") userForm(null);
+  else if(a==="u-edit") userForm(USERS.find(u=>u.id===id));
+  else if(a==="u-reset"){ const u=USERS.find(x=>x.id===id);
+    try{ await Q(SB.auth.resetPasswordForEmail(u.email,{redirectTo:location.origin+location.pathname})); toast("Link para criar nova senha enviado para "+u.email); }catch(er2){ toast(er2.message); } }
+  else if(a==="c-new") projectForm(null);
+  else if(a==="c-edit") projectForm(CLIENTS.find(c=>String(c.id)===id));
+  else if(a==="c-open"){ store("nw_client",String(id)); location.reload(); }
+});
+
+/* --- arquivos complementares --- */
+let FILES=[];
+const FEXT=["pdf","xls","xlsx","xlsm","csv","doc","docx","ppt","pptx","odt","ods","txt","zip","rar","7z","png","jpg","jpeg","gif","mp4"];
+const fsize=(n)=>n<1024?n+" B":n<1048576?(n/1024).toFixed(0)+" KB":(n/1048576).toFixed(1).replace(".",",")+" MB";
+const ficon=(n)=>{ const e=(n.split(".").pop()||"").toLowerCase(); const c={pdf:"#b3261e",xls:"#2e7d32",xlsx:"#2e7d32",xlsm:"#2e7d32",csv:"#2e7d32",doc:"#0f6aa8",docx:"#0f6aa8",ppt:"#e65100",pptx:"#e65100"}[e]||"#566574"; return `<span class="fico" style="background:${c}">${esc((e||"?").slice(0,4).toUpperCase())}</span>`; };
+const clientUsers=()=>Object.entries(names).filter(([,p])=>p&&p.role==="cliente").map(([id,p])=>({id,name:p.name}));
+function visBadge(f){
+  if(f.visibility==="team") return '<span class="badge todo">Somente equipe NW</span>';
+  if(f.visibility==="all") return '<span class="badge done">Todos do projeto</span>';
+  const n=(f.userIds||[]).map(i=>nameOf(i)); return `<span class="badge agendado" title="${esc(n.join(", "))}">${n.length} usuário${n.length===1?"":"s"}</span>`;
+}
+function visFields(vis,ids){
+  const cu=clientUsers();
+  return `<div class="f"><span class="lb">Quem pode ver e baixar</span><div class="chk" style="flex-direction:column;gap:6px">
+    <label><input type="radio" name="vis" value="team" ${vis==="team"?"checked":""}> Somente a equipe NW (interno)</label>
+    <label><input type="radio" name="vis" value="all" ${vis==="all"?"checked":""}> Todos os usuários deste projeto</label>
+    <label><input type="radio" name="vis" value="users" ${vis==="users"?"checked":""}> Apenas usuários selecionados</label></div></div>
+    <div class="f" data-vu><span class="lb">Usuários do cliente</span><div class="cl-list">${cu.map(u=>`<label><input type="checkbox" name="vusers" value="${esc(u.id)}" ${(ids||[]).includes(u.id)?"checked":""}> ${esc(u.name)}</label>`).join("")||'<span class="hint">Este projeto ainda não tem usuários de cliente. Cadastre em Administração → Usuários.</span>'}</div></div>`;
+}
+function wireVis(fm){ const sync=()=>{ const v=fm.querySelector("input[name=vis]:checked").value; fm.querySelector("[data-vu]").hidden=v!=="users"; }; fm.querySelectorAll("input[name=vis]").forEach(r=>r.addEventListener("change",sync)); sync(); }
+const readVis=(fd)=>({visibility:fd.get("vis"),userIds:fd.getAll("vusers")});
+async function loadFiles(){ if(!CID) return; try{ FILES=(await Q(SB.from("files").select("*").eq("client_id",CID).order("uploaded_at",{ascending:false}))).map(f=>({id:f.id,name:f.name,description:f.description,size:Number(f.size),path:f.path,visibility:f.visibility,userIds:f.allowed_users||[],uploadedBy:f.uploaded_by,uploadedAt:f.uploaded_at})); }catch(e){ FILES=[]; } rArquivos(); }
+function rArquivos(){
+  const el=$("#s-arquivos"); if(!el||MODE!=="api") return;
+  const rows=FILES.map(f=>`<tr><td><div class="fcell">${ficon(f.name)}<div><b>${esc(f.name)}</b>${f.description?`<br><span class="hint">${esc(f.description)}</span>`:""}</div></div></td><td class="num">${fsize(f.size)}</td><td>${esc(nameOf(f.uploadedBy))}<br><span class="hint">${fmt(f.uploadedAt)}</span></td>${canWrite?`<td>${visBadge(f)}</td>`:""}<td class="fact"><button class="btn sm pri" data-fa="dl" data-id="${f.id}">Baixar</button>${canWrite?` <button class="btn sm" data-fa="edit" data-id="${f.id}">Editar</button> <button class="btn sm danger" data-fa="del" data-id="${f.id}">Excluir</button>`:""}</td></tr>`).join("");
+  el.innerHTML=`<div class="bar-tools"><h2 style="margin:0">Arquivos complementares</h2>${canWrite?`<span class="row-gap"><input type="file" id="fa-in" multiple hidden accept=".${FEXT.join(",.")}"><button class="btn pri" data-fa="pick">+ Enviar arquivos</button></span>`:""}</div>
+    ${FILES.length?`<div class="card tbl" style="padding:6px 8px"><table style="min-width:${canWrite?760:640}px"><thead><tr><th>Arquivo</th><th>Tamanho</th><th>Enviado por</th>${canWrite?"<th>Quem vê</th>":""}<th></th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="empty">${canWrite?"Nenhum arquivo ainda. Envie planilhas modelo, manuais e documentos e escolha quem pode ver (clique em Enviar ou arraste aqui).":"Nenhum arquivo disponível para você no momento."}</div>`}
+    ${canWrite?`<div class="hint" style="margin-top:8px">Formatos: PDF, Excel, Word, PowerPoint, CSV, TXT, ZIP, imagens e MP4 · até 20 MB por arquivo e 300 MB por projeto. Cada arquivo só é visto por quem você permitir.</div>`:""}`;
+  const inp=$("#fa-in"); if(inp) inp.onchange=()=>{ const l=Array.from(inp.files); inp.value=""; if(l.length) uploadDialog(l); };
+}
+function uploadDialog(list){
+  const ok=list.filter(f=>{ const ext=(f.name.split(".").pop()||"").toLowerCase(); if(!FEXT.includes(ext)){ toast("“"+f.name+"”: tipo de arquivo não permitido."); return false; } if(f.size>20*1024*1024){ toast("“"+f.name+"” passa de 20 MB."); return false; } return true; });
+  if(!ok.length) return;
+  openModal("Enviar "+(ok.length>1?ok.length+" arquivos":"arquivo"),`<div class="hint">${ok.map(f=>esc(f.name)+" ("+fsize(f.size)+")").join("<br>")}</div>`+F.txt("description","Descrição (opcional)","")+visFields("team",[]),{submit:"Enviar",onOpen:wireVis,
+    onSubmit:async(fd)=>{ const v=readVis(fd); if(v.visibility==="users"&&!v.userIds.length){ toast("Selecione ao menos um usuário."); return; } closeModal(); await uploadFiles(ok,(fd.get("description")||"").trim(),v); }});
+}
+async function uploadFiles(list,description,v){
+  let ok=0;
+  for(const [i,f] of list.entries()){
+    toast("Enviando "+(i+1)+" de "+list.length+": "+f.name+"…");
+    const ext=(f.name.split(".").pop()||"").toLowerCase(); const path=CID+"/"+crypto.randomUUID()+"."+ext; let up=false;
+    try{
+      await Q(SB.storage.from("arquivos").upload(path,f,{contentType:f.type||"application/octet-stream",upsert:false})); up=true;
+      await Q(SB.from("files").insert({client_id:CID,name:f.name,description,mime:f.type||"",size:f.size,path,visibility:v.visibility,allowed_users:v.visibility==="users"?v.userIds:[],uploaded_by:ME.id})); ok++;
+    }catch(e){ if(up) SB.storage.from("arquivos").remove([path]).then(()=>{},()=>{}); toast("“"+f.name+"”: "+(e.message||"erro ao enviar")); }
+  }
+  await loadFiles(); if(ok) toast(ok+(ok>1?" arquivos enviados":" arquivo enviado"));
+}
+function fileEdit(f){
+  openModal("Editar arquivo",F.txt("name","Nome do arquivo",f.name,"required")+F.txt("description","Descrição (opcional)",f.description)+visFields(f.visibility||"team",f.userIds||[]),{submit:"Salvar",onOpen:wireVis,onSubmit:async(fd)=>{
+    const v=readVis(fd); if(v.visibility==="users"&&!v.userIds.length){ toast("Selecione ao menos um usuário."); return; }
+    let nm=(fd.get("name")||"").trim(); const ext=(f.name.split(".").pop()||"").toLowerCase(); if(!nm.toLowerCase().endsWith("."+ext)) nm+="."+ext;
+    try{ await upd("files","id",f.id,{name:nm,description:(fd.get("description")||"").trim(),visibility:v.visibility,allowed_users:v.visibility==="users"?v.userIds:[]}); closeModal(); await loadFiles(); toast("Arquivo atualizado"); }catch(e){ toast(e.message); } }});
+}
+async function downloadFile(f){
+  try{ const d=await Q(SB.storage.from("arquivos").createSignedUrl(f.path,120,{download:f.name})); const a=document.createElement("a"); a.href=d.signedUrl; a.download=f.name; document.body.appendChild(a); a.click(); a.remove(); }
+  catch(e){ toast("Não foi possível baixar: "+e.message); }
+}
+document.addEventListener("click",async(e)=>{
+  const b=e.target.closest("[data-fa]"); if(!b) return; const a=b.dataset.fa, id=Number(b.dataset.id);
+  if(a==="pick"){ const i=$("#fa-in"); if(i) i.click(); }
+  else if(a==="dl") downloadFile(FILES.find(f=>f.id===id));
+  else if(a==="edit") fileEdit(FILES.find(f=>f.id===id));
+  else if(a==="del"){ if(!b.dataset.sure){ b.dataset.sure="1"; b.textContent="Confirmar?"; setTimeout(()=>{ b.dataset.sure=""; b.textContent="Excluir"; },4000); return; }
+    const f=FILES.find(x=>x.id===id); try{ await Q(SB.from("files").delete().eq("id",id)); SB.storage.from("arquivos").remove([f.path]).then(()=>{},()=>{}); await loadFiles(); toast("Arquivo excluído"); }catch(er2){ toast(er2.message); } }
+});
+["dragover","drop"].forEach(t=>document.addEventListener(t,(e)=>{ const z=e.target.closest&&e.target.closest("#s-arquivos"); if(!z||!canWrite) return; e.preventDefault(); if(t==="drop"&&e.dataTransfer&&e.dataTransfer.files.length) uploadDialog(Array.from(e.dataTransfer.files)); }));
+
+
+boot();
+</script>
+
+</body></html>
