@@ -1237,9 +1237,15 @@ function rUserbar(){
   const a=$("#ub-adm"); if(a) a.onclick=()=>{ adminOpen=!adminOpen; showMain(); };
   $("#ub-pw").onclick=()=>renderChange(false); $("#ub-out").onclick=logout;
 }
+function setHead(){
+  const inProj=!!CID&&!adminOpen; const c=CLIENTS.find(x=>x.id===CID);
+  $("#cname").textContent=inProj&&c?c.name:"Plataforma de Implantação";
+  const sb=document.querySelector(".top .sub"); if(sb) sb.textContent=inProj?"Cronograma, agenda e fichas de atendimento da implantação":(ME&&ME.role==="admin"?"Administração de projetos e usuários":"Acompanhamento das implantações NW Software");
+  document.title=inProj&&c?"Implantação "+c.name:"Plataforma de Implantação NW";
+}
 function showMain(){
   $("#auth").hidden=true; rUserbar();
-  const noClient=!CID;
+  const noClient=!CID; setHead();
   $("#admin").hidden=!(adminOpen||noClient); $(".tabs").hidden=adminOpen||noClient; $("main").hidden=adminOpen||noClient;
   if(adminOpen||noClient) rAdmin();
 }
@@ -1251,8 +1257,7 @@ async function enterApp(){
     const saved=Number(store("nw_client")); CID=(CLIENTS.find(c=>c.id===saved)||CLIENTS.find(c=>c.active)||CLIENTS[0]||{}).id||null;
     if(!CID){ if(ME.role!=="admin"){ showAuth(`<div class="card"><h2>Sem implantação disponível</h2><div class="hint">Seu usuário ainda não está vinculado a nenhum cliente. Fale com o administrador da NW.</div><button class="btn" id="o">Sair</button></div>`); $("#o").onclick=logout; return; } adminOpen=true; adminTab="clientes"; showMain(); return; }
     const c=CLIENTS.find(x=>x.id===CID); clientName=c.name; SEED=/francisco/i.test(c.name);
-    $("#cname").textContent=c.name; document.title="Implantação "+c.name;
-    uid=ME.id; myName=ME.name; user=null; names={}; names[ME.id]={name:ME.name,role:ME.role};
+        uid=ME.id; myName=ME.name; user=null; names={}; names[ME.id]={name:ME.name,role:ME.role};
     (await Q(SB.rpc("project_people",{p_cid:CID}))||[]).forEach(p=>{ names[p.id]={name:p.name,role:p.role}; });
     db=makeDb(CID); await db.load();
     canWrite=(ME.role==="admin"||ME.role==="consultor")&&c.active; isAdmin=canWrite;
@@ -1266,7 +1271,7 @@ function subscribeApi(){
   db.doc("plan/cfg").onSnapshot((snap)=>{ ST.cfg=snap.exists?(snap.data()||{}):{}; render(); });
 }
 async function bootApi(){
-  $(".tabs").hidden=true; $("main").hidden=true;
+  $(".tabs").hidden=true; $("main").hidden=true; setHead();
   if(!SB_READY){ renderSetup(); return; }
   SB.auth.onAuthStateChange((ev)=>{ if(ev==="PASSWORD_RECOVERY"){ RECOVERY=true; setTimeout(()=>{ SB.auth.getSession().then(({data})=>{ if(data.session) afterLogin(data.session.user.id,false); }); },0); } else if(ev==="SIGNED_OUT"&&ME){ location.reload(); } });
   const { data }=await SB.auth.getSession();
