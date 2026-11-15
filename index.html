@@ -227,6 +227,22 @@ tr.clk{cursor:pointer} tr.clk:hover td{background:var(--surface2)}
 .fico{display:inline-grid;place-items:center;min-width:40px;height:28px;padding:0 6px;border-radius:6px;color:#fff;font-size:11px;font-weight:700;letter-spacing:.03em;flex:none}
 .fcell{display:flex;gap:10px;align-items:center;min-width:0}.fcell b{overflow-wrap:anywhere}
 .fact{white-space:nowrap;text-align:right}.fact .btn{text-decoration:none;display:inline-block}
+.tk{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.tk-h{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.tk-h b{flex:1 1 260px;min-width:0;overflow-wrap:anywhere}
+.tk-m{font-size:13px;color:var(--muted)}
+.tk-d{overflow-wrap:anywhere;white-space:pre-wrap}
+.tk-n{font-size:13px;background:var(--surface2);border-radius:8px;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.tk-a{display:flex;flex-wrap:wrap;gap:8px}
+.tk.late{border-color:var(--danger)}
+.badge.late{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger);border-color:var(--danger)}
+.due.late{color:var(--danger);font-weight:600}
+.imp-sum{display:flex;flex-wrap:wrap;gap:8px}
+.imp-sum .pill{font-weight:600}
+.imp-warn{font-size:13px;color:var(--doing-ink);background:color-mix(in srgb,var(--doing) 16%,transparent);border-radius:8px;padding:8px 10px}
+.imp-err{font-size:13px;color:var(--danger);background:color-mix(in srgb,var(--danger) 10%,transparent);border-radius:8px;padding:8px 10px}
+.imp-tb{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.imp-tb table{min-width:520px;font-size:13px}
 .fr{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
 .f{display:flex;flex-direction:column;gap:4px;min-width:0}
 .f>label,.f>.lb{font-size:13px;font-weight:600}
@@ -304,6 +320,7 @@ img{max-width:100%}
   <section id="s-cal"></section>
   <section id="s-fichas"></section>
   <section id="s-users"></section>
+  <section id="s-tarefas"></section>
   <section id="s-arquivos"></section>
   <div class="foot" id="foot"></div>
 </main>
@@ -316,6 +333,7 @@ img{max-width:100%}
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
 <script>
 const MODE = "api";
 let clientName = "Fundição São Francisco", SEED = true;
@@ -340,24 +358,24 @@ const AREAS = [
   {k:"pcp",grp:"Produção",label:"Fábrica / PCP / Expedição",short:"Rodrigo",people:["Rodrigo"],mail:["rodrigoreis"]},
   {k:"man",grp:"Produção",label:"Manutenção",short:"Juninho",people:["Juninho"],mail:["manutencao"]}
 ];
-const GRP_TITLE = {"Geral":"Geral","Administrativo":"Administrativo","Produção":"Produção","Outros":"Outros"};
+const GRP_TITLE = {"Geral":"Geral","Administrativo":"Administrativo · responsável: Simone","Produção":"Produção · responsável: Rafael","Outros":"Outros"};
 const AREA0 = Object.fromEntries(AREAS.map(a=>[a.k,a]));
 const GROUPS = ["Geral","Administrativo","Produção","Outros"];
 let AL = [], AREA = {}, REG = {};
 const LBL = {todo:"Não iniciada",doing:"Em andamento",done:"Concluída",blocked:"Bloqueada"};
 const ELBL = {agendado:"Agendado",realizado:"Realizado",registrar:"Ficha pendente",cancelado:"Cancelado"};
-const TABS = [["visao-geral","Visão geral"],["cronograma","Cronograma"],["agenda","Agenda"],["fichas","Fichas de atendimento"],["equipe","Key users"],["arquivos","Arquivos complementares"]];
-const SEC_TAB = {"s-resumo":"visao-geral","s-charts":"visao-geral","s-ev":"visao-geral","s-plan":"cronograma","s-cal":"agenda","s-fichas":"fichas","s-users":"equipe","s-arquivos":"arquivos"};
-const COLS = ["progress","fichas","agenda","plan_g","plan_s","plan_i","notas","equipe","arquivos","arquivos_equipe"];
+const TABS = [["visao-geral","Visão geral"],["cronograma","Cronograma"],["tarefas","Tarefas do cliente"],["agenda","Agenda"],["fichas","Fichas de atendimento"],["equipe","Key users"],["arquivos","Arquivos complementares"]];
+const SEC_TAB = {"s-resumo":"visao-geral","s-charts":"visao-geral","s-ev":"visao-geral","s-plan":"cronograma","s-tarefas":"tarefas","s-cal":"agenda","s-fichas":"fichas","s-users":"equipe","s-arquivos":"arquivos"};
+const COLS = ["progress","fichas","agenda","plan_g","plan_s","plan_i","notas","equipe","tarefas","tarefas_status","arquivos","arquivos_equipe"];
 
-const ST = {arquivos:{},arquivos_equipe:{},progress:{},fichas:{},agenda:{},plan_g:{},plan_s:{},plan_i:{},notas:{},equipe:{},cfg:{}};
+const ST = {tarefas:{},tarefas_status:{},arquivos:{},arquivos_equipe:{},progress:{},fichas:{},agenda:{},plan_g:{},plan_s:{},plan_i:{},notas:{},equipe:{},cfg:{}};
 let filter = "all", editing = false, tab = "visao-geral";
 const open = new Set();
 let openInit = false;
 let db = null, user = null, uid = null, isAdmin = true, myName = "", names = {};
 let link = "connecting";
 const pending = new Set();
-let canWrite = true; const openC = new Set(); const drafts = {};
+let canWrite = true, canTask = null; const openC = new Set(); const drafts = {};
 let MD = null;       // modal aberto
 let M = null;        // cálculo atual
 const today0 = new Date();
@@ -369,7 +387,8 @@ const pad = (n)=>String(n).padStart(2,"0");
 const ds = (d)=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const toDate = (d,t)=>{ const a=String(d).split("-").map(Number), b=String(t||"00:00").split(":").map(Number); return new Date(a[0],a[1]-1,a[2],b[0]||0,b[1]||0); };
 const fmtD = (d)=>{ const a=String(d).split("-"); return a[2]+"/"+a[1]+"/"+a[0]; };
-const fmt = (iso)=>{ try{ return new Date(iso).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } };
+const fmt = (iso)=>{ try{ const d=new Date(iso); const o={day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}; if(d.getFullYear()!==new Date().getFullYear()) o.year="numeric"; return d.toLocaleString("pt-BR",o); }catch(e){ return ""; } };
+const dtl = (iso)=>{ const d=iso?new Date(iso):new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes()); };
 const mins = (a,b)=>{ if(!a||!b) return 0; const x=a.split(":").map(Number), y=b.split(":").map(Number); return Math.max(0,(y[0]*60+y[1])-(x[0]*60+x[1])); };
 const hm = (m)=>{ const h=Math.floor(m/60), r=m%60; return h?(h+"h"+(r?pad(r):"")):(r+" min"); };
 const tsOf=(d,t)=>(d&&t)?new Date(d+"T"+t).getTime():NaN;
@@ -395,10 +414,10 @@ function plan(){
   const gs=BASE.map(g=>({id:g.id,name:rn[g.id]||g.name,short:rn[g.id]||g.short,color:g.color,deps:g.deps,custom:false,
     sections:g.sections.filter(s=>!hs.has(s.id)).map(s=>({id:s.id,name:rn[s.id]||s.name,areas:ar[s.id]||s.areas,custom:false,
       items:s.items.filter(i=>!hid.has(i.id)).map(i=>({id:i.id,t:rn[i.id]||i.t,custom:false}))}))}));
-  arr(ST.plan_g).forEach((g,i)=>gs.push({id:g.id,name:rn[g.id]||g.name,short:rn[g.id]||g.name,color:g.color||COLORS[(i+3)%COLORS.length],deps:["instalacao"],custom:true,sections:[]}));
+  arr(ST.plan_g).forEach((g,i)=>gs.push({id:g.id,name:rn[g.id]||g.name,short:rn[g.id]||g.name,color:g.color||COLORS[(i+3)%COLORS.length],deps:Array.isArray(g.deps)?g.deps:["instalacao"],custom:true,sections:[]}));
   const gm=Object.fromEntries(gs.map(g=>[g.id,g]));
   arr(ST.plan_s).forEach(s=>{ const g=gm[s.g]; if(g) g.sections.push({id:s.id,name:rn[s.id]||s.name,areas:ar[s.id]||s.areas||[],custom:true,items:[]}); });
-  arr(ST.plan_i).forEach(it=>{ const g=gm[it.g]; if(!g) return; const s=g.sections.find(x=>x.id===it.s); if(s) s.items.push({id:it.id,t:rn[it.id]||it.t,custom:true}); });
+  arr(ST.plan_i).forEach(it=>{ const g=gm[it.g]; if(!g) return; const s=g.sections.find(x=>x.id===it.s); if(s) s.items.push({id:it.id,t:rn[it.id]||it.t,custom:true,due:it.due||"",resp:it.resp||""}); });
   const order=cfg.gorder||[];
   gs.sort((a,b)=>{ const x=order.indexOf(a.id), y=order.indexOf(b.id); return (x<0?999:x)-(y<0?999:y); });
   return gs;
@@ -653,7 +672,7 @@ function rPlan(){
   const hidCount=(ST.cfg.hidden||[]).length+(ST.cfg.hiddenSec||[]).length;
   let html=`<div class="bar-tools"><h2 style="margin:0">Cronograma da implantação</h2><div class="seg" role="group" aria-label="Filtrar atividades">${seg}</div></div>
     <div class="bar-tools"><span class="hint">${editing?"Modo de personalização: edite gestões, etapas e atividades deste cliente.":"Clique no círculo de uma atividade para alternar: não iniciada, em andamento, concluída."}</span>
-      <span class="row-gap">${isAdmin?`<button class="btn ${editing?"pri":""}" data-act="edit">${editing?"Concluir personalização":"Personalizar cronograma"}</button>`:""}${editing?`<button class="btn" data-act="g-new">+ Nova gestão</button>${hidCount?`<button class="btn" data-act="restore">Restaurar removidas (${hidCount})</button>`:""}`:""}<button class="chip" data-act="expand">Expandir tudo</button><button class="chip" data-act="collapse">Recolher tudo</button></span></div>`;
+      <span class="row-gap">${isAdmin?`<button class="btn" data-act="imp-open">Importar cronograma</button><button class="btn" data-act="imp-layout">Baixar modelo (Excel)</button>${(Object.keys(ST.plan_g).length||Object.keys(ST.plan_s).length||Object.keys(ST.plan_i).length)?`<button class="btn" data-act="imp-reset">Voltar ao padrão</button>`:""}<button class="btn ${editing?"pri":""}" data-act="edit">${editing?"Concluir personalização":"Personalizar cronograma"}</button>`:""}${editing?`<button class="btn" data-act="g-new">+ Nova gestão</button>${hidCount?`<button class="btn" data-act="restore">Restaurar removidas (${hidCount})</button>`:""}`:""}<button class="chip" data-act="expand">Expandir tudo</button><button class="chip" data-act="collapse">Recolher tudo</button></span></div>`;
   const ids=M.gs.map(G=>G.g.id);
   for(const G of M.gs){
     const g=G.g, isOpen=open.has(g.id);
@@ -681,8 +700,10 @@ function rPlan(){
       for(const it of its){
         const p=pg(it.id), st=p.s||"todo";
         const lbl=st==="done"?"concluída":st==="doing"?"em andamento":"não iniciada";
-        const meta=st==="done"?`Concluída por ${esc(nameOf(p.by))} · ${fmt(p.at)}`:st==="doing"?`Iniciada por ${esc(nameOf(p.by))} · ${fmt(p.at)}`:"";
-        body+=`<div class="it ${st}"><button class="st ${st}" data-act="cycle" data-id="${esc(it.id)}" ${lock?"disabled":""} aria-label="${esc(it.t)}: ${lbl}. Clique para alterar.">${st==="done"?checkIcon():st==="doing"?dotIcon():""}</button><div class="tx">${esc(it.t)}<button class="link nb" data-act="note-toggle" data-s="${esc(it.id)}">${noteCount(it.id)?"comentários ("+noteCount(it.id)+")":"comentar"}</button>${editing?`<span class="ed"><button class="link" data-act="i-ren" data-g="${esc(g.id)}" data-s="${esc(s.id)}" data-id="${esc(it.id)}">editar</button> · <button class="link" data-act="i-del" data-id="${esc(it.id)}" data-c="${it.custom?1:0}">remover</button></span>`:""}</div><div class="mt">${meta}</div>${openC.has(it.id)?`<div style="grid-column:1/-1">${notePanel(it.id)}</div>`:""}</div>`;
+        const meta=(st==="done"?`Concluída por ${esc(nameOf(p.by))} · ${fmt(p.at)}`:st==="doing"?`Iniciada por ${esc(nameOf(p.by))} · ${fmt(p.at)}`:"")+((st!=="todo"&&!lock)?` <button class="link nb" data-act="i-date" data-id="${esc(it.id)}" style="margin-left:4px">alterar data</button>`:"");
+        const late=!!it.due&&st!=="done"&&it.due<ds(new Date());
+        const pln=(it.due||it.resp)?`<span class="nb ${late?"due late":""}">${it.due?"Prev. "+fmtD(it.due)+(late?" (atrasada)":""):""}${it.due&&it.resp?" · ":""}${it.resp?esc(it.resp):""}</span>`:"";
+        body+=`<div class="it ${st}"><button class="st ${st}" data-act="cycle" data-id="${esc(it.id)}" ${lock?"disabled":""} aria-label="${esc(it.t)}: ${lbl}. Clique para alterar.">${st==="done"?checkIcon():st==="doing"?dotIcon():""}</button><div class="tx">${esc(it.t)}${pln}<button class="link nb" data-act="note-toggle" data-s="${esc(it.id)}">${noteCount(it.id)?"comentários ("+noteCount(it.id)+")":"comentar"}</button>${editing?`<span class="ed"><button class="link" data-act="i-ren" data-g="${esc(g.id)}" data-s="${esc(s.id)}" data-id="${esc(it.id)}">editar</button> · <button class="link" data-act="i-del" data-id="${esc(it.id)}" data-c="${it.custom?1:0}">remover</button></span>`:""}</div><div class="mt">${meta}</div>${openC.has(it.id)?`<div style="grid-column:1/-1">${notePanel(it.id)}</div>`:""}</div>`;
       }
       if(editing && !its.length) body+=`<p class="note">Etapa sem atividades.</p>`;
       body+=`</div>`;
@@ -747,7 +768,7 @@ function rFichas(){
 
 /* ---------- abas ---------- */
 function rTabs(){
-  $("#tabs").innerHTML=TABS.map(([k,l])=>`<button class="tab" role="tab" data-act="tab" data-t="${k}" aria-selected="${tab===k}">${l}${k==="agenda"&&M.pendFicha?`<span class="cnt" title="Fichas pendentes">${M.pendFicha}</span>`:""}</button>`).join("");
+  $("#tabs").innerHTML=TABS.map(([k,l])=>`<button class="tab" role="tab" data-act="tab" data-t="${k}" aria-selected="${tab===k}">${l}${k==="agenda"&&M.pendFicha?`<span class="cnt" title="Fichas pendentes">${M.pendFicha}</span>`:""}${k==="tarefas"&&tOpenCount()?`<span class="cnt" title="Tarefas do cliente em aberto">${tOpenCount()}</span>`:""}</button>`).join("");
   for(const [id,t] of Object.entries(SEC_TAB)) $("#"+id).hidden = t!==tab;
 }
 function setTab(t){ if(!TABS.some(x=>x[0]===t)) t="visao-geral"; tab=t; try{ if(location.hash!=="#"+t) location.hash=t; }catch(e){} if(M) rTabs(); }
@@ -755,14 +776,14 @@ window.addEventListener("hashchange",()=>{ const t=(location.hash||"").slice(1);
 
 function rFoot(){
   const m={live:"Tudo é salvo e compartilhado com quem abrir esta página.",slow:"Ainda não foi possível alcançar os dados salvos; o que aparece pode estar desatualizado.",local:"Modo local: nada desta visita é salvo.",connecting:"Conectando aos dados salvos…"}[link];
-  $("#foot").innerHTML=`<span class="pill">${link==="live"?"Salvo":link==="local"?"Local":"…"}</span><span>${m}${canWrite?(isAdmin?"":" Você pode registrar o andamento das atividades; agenda, fichas e personalização ficam com a equipe NW."):" Acesso somente para visualização."}</span>`;
+  $("#foot").innerHTML=`<span class="pill">${link==="live"?"Salvo":link==="local"?"Local":"…"}</span><span>${m}${canWrite?(isAdmin?"":" Você pode registrar o andamento das atividades; agenda, fichas e personalização ficam com a equipe NW."):(tCan()?" Acesso para visualização; você pode atualizar o andamento das suas tarefas.":" Acesso somente para visualização.")}</span>`;
 }
 function render(){
   AL=effAreas(); AREA=Object.fromEntries(AL.map(a=>[a.k,a]));
   const ae=document.activeElement, dk=ae&&ae.dataset&&ae.dataset.draft, ss=dk?ae.selectionStart:0, se=dk?ae.selectionEnd:0;
   M=compute();
   if(!openInit){ openInit=true; if(M.rec) open.add(M.rec.G.g.id); }
-  rResumo(); rCharts(); rEv(); rUsers(); rPlan(); rCal(); rFichas(); if(typeof rArquivos==="function") rArquivos(); rTabs(); rFoot();
+  rResumo(); rCharts(); rEv(); rUsers(); rPlan(); rTarefas(); rCal(); rFichas(); if(typeof rArquivos==="function") rArquivos(); rTabs(); rFoot();
   if(dk){ const t=document.querySelector('textarea[data-draft="'+dk+'"]'); if(t){ t.focus(); try{ t.setSelectionRange(ss,se); }catch(e){} } }
 }
 
@@ -771,14 +792,21 @@ async function put(c,id,data){ if(!db){ ST[c][id]=data; render(); return; } awai
 async function del(c,id){ if(!db){ delete ST[c][id]; render(); return; } await db.doc(c+"/"+id).delete(); }
 async function putCfg(patch){ const next=Object.assign({},ST.cfg,patch); if(!db){ ST.cfg=next; render(); return; } await db.doc("plan/cfg").set(next); }
 const guard=async(fn,msg)=>{ try{ await fn(); return true; }catch(e){ if(e&&e.api){ if(e.status===401){ location.reload(); return false; } toast(e.message); return false; } toast(msg||"Sem permissão para salvar. Peça acesso de editor ao consultor NW."); return false; } };
-async function setStatus(id,next){
-  if(pending.has(id)) return;
-  const rec=next==="todo"?null:{s:next,by:uid,at:new Date().toISOString()};
-  if(!db){ if(!rec) delete ST.progress[id]; else ST.progress[id]=rec; render(); return; }
+async function setStatus(id,next,at,keepBy){
+  if(pending.has(id)) return false;
+  const old=pg(id);
+  const rec=next==="todo"?null:{s:next,by:(keepBy&&old.by)?old.by:uid,at:at||new Date().toISOString()};
+  if(!db){ if(!rec) delete ST.progress[id]; else ST.progress[id]=rec; render(); return true; }
   pending.add(id);
-  try{ if(!rec) await db.doc("progress/"+id).delete(); else await db.doc("progress/"+id).set(rec); }
-  catch(e){ toast("Sem permissão para registrar. Peça acesso de colaborador ao consultor NW."); }
+  try{ if(!rec) await db.doc("progress/"+id).delete(); else await db.doc("progress/"+id).set(rec); return true; }
+  catch(e){ toast(e&&e.api?e.message:"Sem permissão para registrar. Peça acesso de colaborador ao consultor NW."); return false; }
   finally{ pending.delete(id); }
+}
+const itemTitle=(id)=>{ for(const G of M.gs) for(const X of G.secs) for(const it of X.s.items) if(it.id===id) return it.t; return ""; };
+function askDate(id,next,editOnly){
+  const p=pg(id), done=next==="done";
+  openModal(editOnly?"Alterar data e hora":(done?"Concluir atividade":"Iniciar atividade"),`<div><b>${esc(itemTitle(id))}</b></div><div class="f"><label for="f-at">${done?"Concluída em":"Iniciada em"}</label><input type="datetime-local" id="f-at" name="at" value="${dtl(editOnly&&p.at?p.at:null)}" required></div><div class="hint">Sugerimos a data e a hora de agora. Altere se a atividade foi ${done?"concluída":"iniciada"} em outro momento.</div>`,
+    {submit:editOnly?"Salvar data":"Confirmar",onSubmit:async(fd)=>{ const t=new Date(fd.get("at")); if(isNaN(t.getTime())){ toast("Informe uma data e hora válidas."); return; } if(await setStatus(id,next,t.toISOString(),!!editOnly)) closeModal(); }});
 }
 
 /* ---------- modal ---------- */
@@ -1034,9 +1062,10 @@ function actSecDel(gid,sid){
     const ok=await guard(async()=>{ if(X.s.custom){ for(const it of X.s.items){ await del("plan_i",it.id); await del("progress",it.id); } await del("plan_s",sid); } else await putCfg({hiddenSec:[...(ST.cfg.hiddenSec||[]),sid]}); });
     if(ok){ closeModal(); toast("Etapa removida"); } }});
 }
-function actItNew(gid,sid){ nameForm("Nova atividade","Descrição da atividade","",async(v)=>{ await put("plan_i",newId(),{g:gid,s:sid,t:v,ord:nextOrd("plan_i")}); }); }
+function actItNew(gid,sid){ nameForm("Nova atividade","Descrição da atividade","",async(v,fd)=>{ const o={g:gid,s:sid,t:v,ord:nextOrd("plan_i")}; if(fd.get("due")) o.due=fd.get("due"); if((fd.get("resp")||"").trim()) o.resp=fd.get("resp").trim(); await put("plan_i",newId(),o); },F.date("due","Data prevista (opcional)","")+F.txt("resp","Responsável (opcional)","")); }
 function actItRen(id){ let cur=""; for(const G of M.gs) for(const X of G.secs) for(const it of X.s.items) if(it.id===id) cur=it.t;
-  nameForm("Editar atividade","Descrição da atividade",cur,async(v)=>{ if(ST.plan_i[id]) await put("plan_i",id,Object.assign({},ST.plan_i[id],{t:v})); else await putCfg({rename:Object.assign({},ST.cfg.rename,{[id]:v})}); }); }
+  const ci=ST.plan_i[id];
+  nameForm("Editar atividade","Descrição da atividade",cur,async(v,fd)=>{ if(ci){ const o=Object.assign({},ci,{t:v}); const du=fd.get("due"), rs=(fd.get("resp")||"").trim(); if(du) o.due=du; else delete o.due; if(rs) o.resp=rs; else delete o.resp; await put("plan_i",id,o); } else await putCfg({rename:Object.assign({},ST.cfg.rename,{[id]:v})}); },ci?F.date("due","Data prevista (opcional)",ci.due||"")+F.txt("resp","Responsável (opcional)",ci.resp||""):""); }
 async function actItDel(id,custom){ if(custom){ await guard(async()=>{ await del("plan_i",id); await del("progress",id); }); } else await guard(()=>putCfg({hidden:[...(ST.cfg.hidden||[]),id]})); toast("Atividade removida"); }
 function actRestore(){
   const hid=ST.cfg.hidden||[], hs=ST.cfg.hiddenSec||[];
@@ -1054,7 +1083,16 @@ document.addEventListener("click",async(e)=>{
   switch(a){
     case "tab": setTab(d.t); break;
     case "m-close": closeModal(); break;
-    case "cycle": { if(!canWrite) break; const cur=pg(d.id).s||"todo"; await setStatus(d.id,{todo:"doing",doing:"done",done:"todo"}[cur]); const nb=document.querySelector('[data-id="'+d.id+'"]'); if(nb) nb.focus(); break; }
+    case "cycle": { if(!canWrite) break; const cur=pg(d.id).s||"todo"; const nx={todo:"doing",doing:"done",done:"todo"}[cur]; if(nx==="todo"){ await setStatus(d.id,"todo"); const nb=document.querySelector('[data-id="'+d.id+'"]'); if(nb) nb.focus(); } else askDate(d.id,nx,false); break; }
+    case "i-date": { if(!canWrite) break; const cur=pg(d.id).s; if(cur==="doing"||cur==="done") askDate(d.id,cur,true); break; }
+    case "tfilter": tfilter=d.f; rTarefas(); break;
+    case "t-new": tForm(null); break;
+    case "t-edit": tForm(d.id); break;
+    case "t-del": tDel(d.id); break;
+    case "t-upd": tUpd(d.id); break;
+    case "imp-open": impDialog(); break;
+    case "imp-layout": downloadLayout(); break;
+    case "imp-reset": impReset(); break;
     case "toggle": { open.has(d.g)?open.delete(d.g):open.add(d.g); render(); const nb=document.querySelector('[data-act="toggle"][data-g="'+d.g+'"]'); if(nb) nb.focus(); break; }
     case "filter": filter=d.f; if(filter!=="all") M.gs.forEach(G=>open.add(G.g.id)); render(); break;
     case "expand": M.gs.forEach(G=>open.add(G.g.id)); render(); break;
@@ -1111,9 +1149,163 @@ document.addEventListener("click",async(e)=>{
 });
 
 /* ---------- dados compartilhados ---------- */
+/* ---------- tarefas do cliente ---------- */
+const TSTAT={todo:"Pendente",doing:"Em andamento",done:"Concluída"};
+let tfilter="abertas";
+const tCan=()=>typeof canTask==="boolean"?canTask:canWrite;
+const tList=()=>{ const today=ds(new Date()); return Object.entries(ST.tarefas||{}).map(([id,t])=>{ const s=(ST.tarefas_status||{})[id]||{}; const st=s.s||"todo";
+  return Object.assign({id},t,{st,note:s.note||"",sby:s.by,sat:s.at,late:!!t.due&&t.due<today&&st!=="done"}); }); };
+const tOpenCount=()=>tList().filter(t=>t.st!=="done").length;
+function rTarefas(){
+  const el=$("#s-tarefas"); if(!el) return;
+  const all=tList(), abertas=all.filter(t=>t.st!=="done"), atras=all.filter(t=>t.late), conc=all.filter(t=>t.st==="done");
+  let list={abertas,atrasadas:atras,concluidas:conc,todas:all}[tfilter]||all;
+  list=list.slice().sort((a,b)=>((a.st==="done")-(b.st==="done"))||String(a.due||"9999").localeCompare(String(b.due||"9999"))||((a.ord||0)-(b.ord||0)));
+  const chips=[["abertas","Em aberto",abertas.length],["atrasadas","Atrasadas",atras.length],["concluidas","Concluídas",conc.length],["todas","Todas",all.length]]
+    .map(([k,l,n])=>`<button class="chip" data-act="tfilter" data-f="${k}" aria-pressed="${tfilter===k}">${l} (${n})</button>`).join("");
+  const cards=list.map(t=>{
+    const bd=t.late?`<span class="badge late">Atrasada</span>`:"";
+    const note=t.note?`<div class="tk-n"><b>Observação${t.sby?" de "+esc(nameOf(t.sby)):""}${t.sat?" · "+fmt(t.sat):""}:</b> ${esc(t.note)}</div>`:(t.st!=="todo"&&t.sat?`<div class="tk-m">${t.st==="done"?"Concluída":"Iniciada"} em ${fmt(t.sat)}${t.sby?" · "+esc(nameOf(t.sby)):""}</div>`:"");
+    return `<div class="card tk ${t.late?"late":""}"><div class="tk-h"><b>${esc(t.title)}</b>${bd}<span class="badge ${t.st}">${TSTAT[t.st]}</span></div>
+      ${t.desc?`<div class="tk-d">${esc(t.desc)}</div>`:""}
+      <div class="tk-m">${t.resp?"Responsável: "+esc(t.resp)+" · ":""}<span class="${t.late?"due late":""}">${t.due?"Prazo: "+fmtD(t.due):"Sem prazo"}</span>${t.by?" · Criada por "+esc(nameOf(t.by))+(t.at?" em "+fmt(t.at):""):""}</div>${note}
+      <div class="tk-a">${tCan()?`<button class="btn sm pri" data-act="t-upd" data-id="${esc(t.id)}">Atualizar andamento</button>`:""}${canWrite?`<button class="btn sm" data-act="t-edit" data-id="${esc(t.id)}">Editar</button><button class="btn sm danger" data-act="t-del" data-id="${esc(t.id)}">Excluir</button>`:""}</div></div>`; }).join("");
+  const empty={abertas:"Nenhuma tarefa em aberto.",atrasadas:"Nenhuma tarefa atrasada.",concluidas:"Nenhuma tarefa concluída ainda.",todas:"Nenhuma tarefa cadastrada."}[tfilter];
+  el.innerHTML=`<div class="bar-tools"><h2 style="margin:0">Tarefas do cliente</h2>${canWrite?`<button class="btn pri" data-act="t-new">+ Nova tarefa</button>`:""}</div>
+    <div class="bar-tools"><span class="hint">Atividades que o cliente precisa executar para a implantação avançar (levantamentos, cadastros, aprovações…). ${tCan()&&!canWrite?"Você pode atualizar o andamento e deixar uma observação.":""}</span><div class="seg" role="group" aria-label="Filtrar tarefas">${chips}</div></div>
+    ${cards||`<div class="empty">${empty}${canWrite&&!all.length?" Clique em “+ Nova tarefa” para criar a primeira.":""}</div>`}`;
+}
+function tForm(id){
+  const t=id?ST.tarefas[id]:null; const people=[...new Set([...(typeof peopleList==="function"?peopleList():[]),...Object.values(names||{}).filter(p=>p&&p.role==="cliente").map(p=>p.name)])].filter(Boolean);
+  const body=F.txt("title","Tarefa (o que o cliente deve fazer)",t?t.title:"","required maxlength=160")+F.ta("desc","Detalhes / instruções (opcional)",t?t.desc||"":"")+
+    `<div class="fr"><div class="f"><label for="f-resp">Responsável no cliente</label><input type="text" id="f-resp" name="resp" list="dl-resp" value="${esc(t?t.resp||"":"")}" maxlength="80"><datalist id="dl-resp">${people.map(n=>`<option value="${esc(n)}">`).join("")}</datalist></div>${F.date("due","Prazo",t?t.due||"":"")}</div>`;
+  openModal(t?"Editar tarefa":"Nova tarefa do cliente",body,{submit:"Salvar",onSubmit:async(fd)=>{
+    const title=(fd.get("title")||"").trim(); if(!title){ toast("Informe a tarefa."); return; }
+    const o=Object.assign({},t||{},{title,desc:(fd.get("desc")||"").trim(),resp:(fd.get("resp")||"").trim(),due:fd.get("due")||""});
+    if(!t){ o.by=uid; o.at=new Date().toISOString(); o.ord=nextOrd("tarefas"); }
+    if(await guard(()=>put("tarefas",id||newId(),o))) closeModal(); }});
+}
+function tDel(id){
+  const t=ST.tarefas[id]; if(!t) return;
+  openModal("Excluir tarefa",`<div>Excluir a tarefa <b>${esc(t.title)}</b>? O andamento registrado também será apagado.</div>`,{submit:"Excluir",onSubmit:async()=>{ if(await guard(async()=>{ await del("tarefas",id); if(ST.tarefas_status[id]) await del("tarefas_status",id); })){ closeModal(); toast("Tarefa excluída"); } }});
+}
+function tUpd(id){
+  const t=ST.tarefas[id]; if(!t) return; const s=ST.tarefas_status[id]||{};
+  openModal("Atualizar andamento",`<div><b>${esc(t.title)}</b></div>${F.sel("st","Situação",[["todo","Pendente"],["doing","Em andamento"],["done","Concluída"]],s.s||"todo")}
+    <div class="f"><label for="f-at">Data e hora</label><input type="datetime-local" id="f-at" name="at" value="${dtl(s.at)}"><div class="hint">Sugerimos agora; altere se foi em outro momento.</div></div>${F.ta("note","Observação (opcional)",s.note||"")}`,
+    {submit:"Salvar",onSubmit:async(fd)=>{
+      const st=fd.get("st"), note=(fd.get("note")||"").trim(); const d=new Date(fd.get("at")); const at=isNaN(d.getTime())?new Date().toISOString():d.toISOString();
+      if(await guard(async()=>{ if(st==="todo"&&!note){ if(ST.tarefas_status[id]) await del("tarefas_status",id); } else await put("tarefas_status",id,{s:st,note,by:uid,at}); })){ closeModal(); toast("Andamento salvo"); } }});
+}
+
+/* ---------- importar cronograma (Excel / CSV) ---------- */
+const LAYOUT_B64="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";
+function downloadLayout(){
+  try{ const bin=atob(LAYOUT_B64), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+    saveFile("Modelo-Cronograma-NW.xlsx",new Blob([u],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"})); }catch(e){ toast("Não foi possível gerar o modelo."); }
+}
+const nrm=(s)=>String(s==null?"":s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+const IHDR={g:["gestao","modulo","fase","gestao modulo"],s:["etapa","secao","sub etapa","subetapa","etapa secao"],t:["atividade","tarefa","descricao","atividade tarefa"],due:["data prevista","prazo","previsao","data prev","data"],resp:["responsavel","area","responsavel area","resp"]};
+const IMP_MAX={g:60,s:400,t:3000};
+function parseDue(v,warn){
+  if(v===""||v==null) return "";
+  let y,m,d;
+  if(typeof v==="number"){ const o=XLSX.SSF.parse_date_code(v); if(!o) { warn(); return ""; } y=o.y; m=o.m; d=o.d; }
+  else { const t=String(v).trim(); let r;
+    if((r=t.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4}|\d{2})/))){ d=+r[1]; m=+r[2]; y=+r[3]; if(y<100) y+=2000; }
+    else if((r=t.match(/^(\d{4})-(\d{2})-(\d{2})/))){ y=+r[1]; m=+r[2]; d=+r[3]; }
+    else { warn(); return ""; } }
+  const dt=new Date(y,m-1,d); if(dt.getFullYear()!==y||dt.getMonth()!==m-1||dt.getDate()!==d||y<2000||y>2100){ warn(); return ""; }
+  return y+"-"+pad(m)+"-"+pad(d);
+}
+async function parseSchedule(file){
+  if(typeof XLSX==="undefined") throw new Error("A biblioteca de leitura de planilhas não carregou. Verifique a conexão e recarregue a página.");
+  if(file.size>5*1024*1024) throw new Error("Arquivo muito grande (máximo 5 MB).");
+  const buf=await file.arrayBuffer(); let wb;
+  if(/\.(csv|txt)$/i.test(file.name)){
+    let text; try{ text=new TextDecoder("utf-8",{fatal:true}).decode(buf); }catch(e){ text=new TextDecoder("windows-1252").decode(buf); }
+    const first=text.replace(/^﻿/,"").split(/\r?\n/)[0]||""; const c=(ch)=>first.split(ch).length;
+    const fs=c(";")>=c(",")&&c(";")>=c("\t")?";":(c("\t")>c(",")?"\t":",");
+    wb=XLSX.read(text.replace(/^﻿/,""),{type:"string",FS:fs,raw:true});
+  } else wb=XLSX.read(buf,{type:"array"});
+  let rows=null, hi=-1, col=null;
+  const order=[...wb.SheetNames].sort((a,b)=>(/cronograma/i.test(b)?1:0)-(/cronograma/i.test(a)?1:0));
+  for(const sn of order){
+    const r=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:""});
+    for(let i=0;i<Math.min(r.length,20);i++){ const cm={}; r[i].forEach((c,j)=>{ const n=nrm(c); for(const k in IHDR) if(cm[k]===undefined&&IHDR[k].includes(n)) cm[k]=j; }); if(cm.t!==undefined){ rows=r; hi=i; col=cm; break; } }
+    if(rows) break;
+  }
+  if(!rows) throw new Error("Não encontrei a coluna “Atividade”. Use o modelo (botão Baixar modelo) e mantenha a linha de títulos.");
+  const out={items:[],warns:[],errors:[]}; let curG="",curS="",badDue=0,noG=0,noS=0;
+  const cell=(r,k)=>col[k]===undefined?"":(typeof r[col[k]]==="string"?r[col[k]].trim():r[col[k]]);
+  for(let i=hi+1;i<rows.length;i++){
+    const r=rows[i]; if(!r.some(c=>String(c).trim()!=="")) continue;
+    const g=String(cell(r,"g")||"").trim(), s=String(cell(r,"s")||"").trim(), t=String(cell(r,"t")||"").trim();
+    if(g&&g!==curG){ curG=g; if(!s) curS=""; } if(s) curS=s;
+    if(!t){ if(g||s) out.items.push({g:curG||"Geral",s:curS,t:"",due:"",resp:"",row:i+1}); continue; }
+    if(!curG) noG++; if(!curS) noS++;
+    out.items.push({g:curG||"Geral",s:curS||"Geral",t,due:parseDue(cell(r,"due"),()=>{ badDue++; }),resp:String(cell(r,"resp")||"").trim(),row:i+1});
+  }
+  if(noG) out.warns.push(noG+" atividade(s) sem Gestão foram colocadas em “Geral”.");
+  if(noS) out.warns.push(noS+" atividade(s) sem Etapa foram colocadas na etapa “Geral”.");
+  if(badDue) out.warns.push(badDue+" data(s) prevista(s) não reconhecida(s) foram ignoradas (use dd/mm/aaaa).");
+  const tree=new Map(); out.items.forEach(x=>{ if(!tree.has(x.g)) tree.set(x.g,new Map()); const sm=tree.get(x.g); if(x.s){ if(!sm.has(x.s)) sm.set(x.s,[]); if(x.t) sm.get(x.s).push(x); } });
+  out.tree=tree; out.nG=tree.size; out.nS=[...tree.values()].reduce((a,m)=>a+m.size,0); out.nI=out.items.filter(x=>x.t).length;
+  if(!out.nI) out.errors.push("Nenhuma atividade encontrada abaixo da linha de títulos.");
+  if(out.nG>IMP_MAX.g) out.errors.push("Mais de "+IMP_MAX.g+" gestões ("+out.nG+").");
+  if(out.nS>IMP_MAX.s) out.errors.push("Mais de "+IMP_MAX.s+" etapas ("+out.nS+").");
+  if(out.nI>IMP_MAX.t) out.errors.push("Mais de "+IMP_MAX.t+" atividades ("+out.nI+").");
+  const long=out.items.filter(x=>x.t.length>200||x.g.length>120||x.s.length>120||x.resp.length>80); if(long.length) out.errors.push(long.length+" linha(s) com texto grande demais (atividade até 200, gestão/etapa até 120, responsável até 80 caracteres). Ex.: linha "+long[0].row+".");
+  return out;
+}
+function impDialog(){
+  let parsed=null;
+  const body=`<div class="hint">Importe um cronograma montado no modelo da NW (Excel ou CSV). Você vê uma prévia antes de confirmar. <button type="button" class="link" id="imp-dl">Baixar o modelo (Excel)</button></div>
+    <div class="f"><label for="imp-file">Arquivo do cronograma (.xlsx, .xls, .csv)</label><input type="file" id="imp-file" accept=".xlsx,.xls,.xlsm,.csv,.txt"></div><div id="imp-prev"></div>
+    <div class="f" id="imp-mode" hidden><span class="lb">O que fazer com o cronograma atual</span><div class="chk" style="flex-direction:column;gap:6px">
+      <label><input type="radio" name="mode" value="replace" checked> <b>Substituir o padrão:</b> usa só o cronograma importado (o padrão NW fica fora do escopo e pode ser restaurado depois)</label>
+      <label><input type="radio" name="mode" value="add"> <b>Acrescentar:</b> mantém o cronograma padrão e adiciona o importado ao final</label></div></div>`;
+  openModal("Importar cronograma",body,{submit:"Importar",wide:true,onOpen:(fm)=>{
+    $("#imp-dl").onclick=downloadLayout;
+    $("#imp-file").addEventListener("change",async(e)=>{ const f=e.target.files[0]; parsed=null; $("#imp-mode").hidden=true; const pv=$("#imp-prev"); if(!f){ pv.innerHTML=""; return; }
+      pv.innerHTML=`<div class="hint">Lendo o arquivo…</div>`;
+      try{ parsed=await parseSchedule(f);
+        const rowsH=parsed.items.filter(x=>x.t).slice(0,8).map(x=>`<tr><td>${esc(x.g)}</td><td>${esc(x.s)}</td><td>${esc(x.t)}</td><td>${x.due?fmtD(x.due):""}</td><td>${esc(x.resp)}</td></tr>`).join("");
+        pv.innerHTML=`<div class="imp-sum"><span class="pill">${parsed.nG} gestão(ões)</span><span class="pill">${parsed.nS} etapa(s)</span><span class="pill">${parsed.nI} atividade(s)</span></div>
+          ${parsed.errors.map(x=>`<div class="imp-err">${esc(x)}</div>`).join("")}${parsed.warns.map(x=>`<div class="imp-warn">${esc(x)}</div>`).join("")}
+          ${parsed.nI?`<div class="imp-tb tbl"><table><thead><tr><th>Gestão</th><th>Etapa</th><th>Atividade</th><th>Prev.</th><th>Responsável</th></tr></thead><tbody>${rowsH}</tbody></table></div>${parsed.nI>8?`<div class="hint">Mostrando as 8 primeiras de ${parsed.nI} atividades.</div>`:""}`:""}`;
+        if(parsed.errors.length) parsed=null; else $("#imp-mode").hidden=false;
+      }catch(er){ pv.innerHTML=`<div class="imp-err">${esc(er.message||"Não foi possível ler o arquivo.")}</div>`; parsed=null; } });
+  },onSubmit:async(fd)=>{ if(!parsed){ toast("Escolha um arquivo válido para importar."); return; }
+    const mode=fd.get("mode")==="add"?"add":"replace"; const p=parsed; const btn=document.querySelector("#mf button[type=submit]"); if(btn){ btn.disabled=true; btn.textContent="Importando…"; }
+    try{ await applyImport(p,mode); closeModal(); toast("Cronograma importado: "+p.nG+" gestão(ões), "+p.nS+" etapa(s), "+p.nI+" atividade(s)."); }
+    catch(e){ if(btn){ btn.disabled=false; btn.textContent="Importar"; } toast(e&&e.message?e.message:"Não foi possível importar."); } }});
+}
+async function bulkPut(c,entries){ if(!entries.length) return; if(db&&db.bulk) await db.bulk(c,entries); else for(const [id,v] of entries) await put(c,id,v); }
+async function bulkDel(c,ids){ if(!ids.length) return; if(db&&db.bulkDel) await db.bulkDel(c,ids); else for(const id of ids) await del(c,id); }
+async function clearCustom(){
+  const itemIds=Object.keys(ST.plan_i);
+  await bulkDel("progress",itemIds); await bulkDel("plan_i",itemIds); await bulkDel("plan_s",Object.keys(ST.plan_s)); await bulkDel("plan_g",Object.keys(ST.plan_g));
+}
+async function applyImport(p,mode){
+  if(mode==="replace") await clearCustom();
+  const baseOrd=mode==="add"?Math.max(nextOrd("plan_g"),nextOrd("plan_s"),nextOrd("plan_i")):1; let ord=baseOrd, gi=mode==="add"?Object.keys(ST.plan_g).length:0;
+  const G=[],S=[],I=[];
+  for(const [gn,sm] of p.tree){ const gid=newId(); G.push([gid,{name:gn,ord:ord++,color:COLORS[(gi++)%COLORS.length],deps:[]}]);
+    for(const [sn,its] of sm){ const sid=newId(); S.push([sid,{g:gid,name:sn,areas:[],ord:ord++}]);
+      for(const it of its){ const o={g:gid,s:sid,t:it.t,ord:ord++}; if(it.due) o.due=it.due; if(it.resp) o.resp=it.resp; I.push([newId(),o]); } } }
+  await bulkPut("plan_g",G); await bulkPut("plan_s",S); await bulkPut("plan_i",I);
+  if(mode==="replace") await putCfg({off:BASE.map(g=>g.id),gorder:[],hidden:[],hiddenSec:[]});
+  G.forEach(([id])=>open.add(id)); render();
+}
+function impReset(){
+  openModal("Voltar ao cronograma padrão",`<div>Isso remove o cronograma importado/personalizado (gestões, etapas e atividades criadas) e restaura o cronograma padrão NW deste projeto. O andamento das atividades do cronograma padrão é mantido; o das atividades removidas é apagado.</div>`,{submit:"Voltar ao padrão",onSubmit:async()=>{
+    if(await guard(async()=>{ await clearCustom(); await putCfg({off:DEFAULT_OFF,gorder:[]}); })){ closeModal(); toast("Cronograma padrão restaurado"); } }});
+}
+
 async function resolveNames(){
   if(!user) return;
-  const ids=new Set(); Object.values(ST.progress).forEach(p=>p.by&&ids.add(p.by)); Object.values(ST.fichas).forEach(f=>f.by&&ids.add(f.by)); Object.values(ST.notas).forEach(n=>n.by&&ids.add(n.by)); Object.values(ST.arquivos||{}).concat(Object.values(ST.arquivos_equipe||{})).forEach(n=>n.by&&ids.add(n.by));
+  const ids=new Set(); Object.values(ST.progress).forEach(p=>p.by&&ids.add(p.by)); Object.values(ST.fichas).forEach(f=>f.by&&ids.add(f.by)); Object.values(ST.notas).forEach(n=>n.by&&ids.add(n.by)); Object.values(ST.tarefas||{}).concat(Object.values(ST.tarefas_status||{})).forEach(n=>n.by&&ids.add(n.by)); Object.values(ST.arquivos||{}).concat(Object.values(ST.arquivos_equipe||{})).forEach(n=>n.by&&ids.add(n.by));
   const need=[...ids].filter(i=>!names[i]); if(!need.length) return;
   try{ const ps=await user.profiles(need); let ch=false; for(const i of need){ if(ps[i]){ names[i]=ps[i]; ch=true; } } if(ch) render(); }catch(e){}
 }
@@ -1157,7 +1349,7 @@ async function fetchAll(mk){ let out=[],from=0; for(;;){ const d=await Q(mk().ra
 
 /* --- camada de dados: mesma interface que a tela já usa (doc/collection/onSnapshot) --- */
 function makeDb(cid){
-  const cache={}; ["progress","fichas","agenda","plan_g","plan_s","plan_i","notas","equipe","plan"].forEach(c=>cache[c]={});
+  const cache={}; ["progress","fichas","agenda","plan_g","plan_s","plan_i","notas","equipe","plan","tarefas","tarefas_status"].forEach(c=>cache[c]={});
   const colL={}, cfgL=[]; let loaded=false;
   const snapOf=(c)=>({docs:Object.entries(cache[c]).map(([id,v])=>({id,data:()=>v})),metadata:{fromCache:false}});
   const cfgSnap=()=>({exists:!!cache.plan.cfg,data:()=>cache.plan.cfg||{}});
@@ -1179,6 +1371,8 @@ function makeDb(cid){
   }
   return {
     load, stream,
+    bulk:async(c,entries)=>{ for(let i=0;i<entries.length;i+=300){ const rows=entries.slice(i,i+300).map(([id,data])=>({client_id:cid,collection:c,id,data})); await Q(SB.from("docs").upsert(rows,{onConflict:"client_id,collection,id"})); } entries.forEach(([id,v])=>{ cache[c][id]=v; }); notify(c); },
+    bulkDel:async(c,ids)=>{ for(let i=0;i<ids.length;i+=60){ await Q(SB.from("docs").delete().eq("client_id",cid).eq("collection",c).in("id",ids.slice(i,i+60))); } ids.forEach(id=>{ delete cache[c][id]; }); notify(c); },
     collection:(c)=>({onSnapshot:(f)=>{ (colL[c]=colL[c]||[]).push(f); if(loaded) f(snapOf(c)); }}),
     doc:(path)=>{ const [c,id]=path.split("/"); return {
       set:async(data)=>{ await Q(SB.from("docs").upsert({client_id:cid,collection:c,id,data},{onConflict:"client_id,collection,id"})); cache[c][id]=data; notify(c); },
@@ -1262,7 +1456,7 @@ async function enterApp(){
         uid=ME.id; myName=ME.name; user=null; names={}; names[ME.id]={name:ME.name,role:ME.role};
     (await Q(SB.rpc("project_people",{p_cid:CID}))||[]).forEach(p=>{ names[p.id]={name:p.name,role:p.role}; });
     db=makeDb(CID); await db.load();
-    canWrite=(ME.role==="admin"||ME.role==="consultor")&&c.active; isAdmin=canWrite;
+    canWrite=(ME.role==="admin"||ME.role==="consultor")&&c.active; isAdmin=canWrite; canTask=canWrite||(ME.role==="cliente"&&c.active);
     subscribeApi(); db.stream(); link="live"; showMain(); await loadFiles(); render();
   }catch(e){ if(e.status===401) renderLogin("Sua sessão expirou. Entre novamente."); else { showAuth(`<div class="card"><h2>Não foi possível carregar</h2><div class="err">${esc(e.message)}</div><button class="btn" id="o">Tentar de novo</button></div>`); $("#o").onclick=()=>enterApp(); } }
 }
